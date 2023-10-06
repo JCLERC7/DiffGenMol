@@ -1,5 +1,6 @@
 # DDPM functions
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torchvision import datasets
 from torchvision import transforms
@@ -24,10 +25,11 @@ alphas_bar_sqrt = torch.sqrt(alphas_bar)
 
 # Add noise directly from x_0 to x_t
 def add_noise_directly(x_init,t) :
-    mean = alphas_bar_sqrt[t]*x_init
+    mean = alphas_bar_sqrt[t] * x_init
     std = torch.sqrt(1-alphas_bar[t])
-    x = mean + std*torch.randn_like(x_init)
-    return x
+    noise = torch.randn_like(x_init)
+    x_t = mean + std*noise
+    return x_t, noise
 
 # REVERSE PROCESS
 
@@ -36,3 +38,11 @@ def reverse_step(x_init, x, t) :
     mean = alphas_bar_sqrt[t-1]*betas[t]/(1-alphas_bar[t])*x_init + alphas_sqrt[t]*(1-alphas_bar[t-1])/(1-alphas_bar[t])*x
     std = torch.sqrt((1-alphas_bar[t-1])/((1-alphas_bar[t]))*betas[t])
     return mean + std*torch.randn_like(x_init)
+
+# LOST FUNCTION
+
+# Calculate loss
+def get_loss(model, x_0, t):
+    x_t, noise = add_noise_directly(x_0, t)
+    noise_pred = model(x_t, t)
+    return F.l1_loss(noise, noise_pred)
