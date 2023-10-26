@@ -1,0 +1,28 @@
+{
+    "name": "DiffGenMol-Selfies",
+
+    "data_loader": {
+        "type": "GuacamolDataLoader",
+        "args":{
+            "batch_size": 16,
+            "num_classes" : 10,
+            "type_property": "Weight",
+            "shuffle": true
+        }
+    },
+    "trainer": {
+        "type": "Trainer1D",
+        "args":{
+            "timesteps": 300,
+            "epochs": 1000,
+            "lr": 1e-4,
+            "unet_dim": 16,
+            "unet_channels" : 1,
+            "unet_cond_drop_prob" : 0.5,
+            "results_folder" : "logger/",
+            "save_dir": "saved/",
+            "save_period": 1,
+            "tensorboard": true
+        }
+    }
+}
