@@ -59,12 +59,12 @@ class Trainer1D():
     def train(self):
         for epoch in range(self.epochs):
             self._train_epoch(epoch)
-            nb_mols = 30
-            samples_classes = torch.tensor([i // (nb_mols//3) for i in range(nb_mols)]).to(self.device)
+            nb_mols = 3 * self.num_classes
+            samples_classes = torch.tensor([i // (nb_mols//self.num_classes) for i in range(nb_mols)]).to(self.device)
             # conditional
             all_continous_mols = torch.squeeze(self.diffusion.sample(samples_classes, cond_scale = 6.))
             recalculate_selfies = utils.mols_continous_to_selfies(all_continous_mols, self.selfies_alphabet, self.largest_selfie_len, self.int_mol, self.dequantized_onehots_min, self.dequantized_onehots_max)
-            mols, valid_selfies_list, valid_count = utils.selfies_to_mols(recalculate_selfies)
+            mols, _, valid_count = utils.selfies_to_mols(recalculate_selfies)
             print('%.2f' % (valid_count / len(recalculate_selfies)*100),  '% of generated samples are valid molecules.')
             print('Match classes : ', utils.generate_mols_match_classes(mols, samples_classes, self.type_property, self.num_classes, self.classes_breakpoints),'% de réussite')
             img = Chem.Draw.MolsToGridImage(mols, molsPerRow=3, subImgSize=(200,200), returnPNG=False)

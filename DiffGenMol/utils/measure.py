@@ -55,8 +55,13 @@ def generate_mols_match_classes(mols, classes, prop, num_classes, breakpoints):
   elif prop == "QED":
     prop_values = [Chem.QED.default(mol) for mol in mols]
   true_classes, _ = discretize_continuous_values(prop_values, num_classes, breakpoints)
+  print('Classes:')
+  print(classes)
+  print('True Classes:')
+  print(true_classes)
   nb_diff = 0
   for c1, c2 in zip(classes, true_classes):
     if c1 != c2:
       nb_diff += 1
+  print(nb_diff)
   return (len(classes)-nb_diff)/len(classes)*100

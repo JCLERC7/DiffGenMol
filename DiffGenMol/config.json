@@ -6,7 +6,7 @@
         "args":{
             "batch_size": 16,
             "num_classes" : 10,
-            "type_property": "LogP",
+            "type_property": "Weight",
             "shuffle": true
         }
     },
