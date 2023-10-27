@@ -21,11 +21,13 @@ np.random.seed(SEED)
 
 def main(config):
     logger = config.get_logger('train')
+
     # setup data_loader instances
     data_loader = config.init_obj('data_loader', data_loaders)
     logger.info(data_loader)
+    logger.info(f'seq_length: {data_loader.get_seq_length()}')
     
-    trainer = config.init_obj('trainer', trainers, data_loader)
+    trainer = config.init_obj('trainer', trainers, config=config, data_loader=data_loader)
     logger.info(trainer)
 
     trainer.train()
