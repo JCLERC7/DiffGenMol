@@ -3,6 +3,7 @@
 data/
 external/
 MolScribe/
+guacamol/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
