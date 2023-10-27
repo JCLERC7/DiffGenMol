@@ -1,15 +1,9 @@
 import numpy as np
-import pandas as pd
 import selfies as sf
 import torch
-from datasets import load_dataset
 from rdkit import Chem
 
-
 # Helper
-def preprocess_smiles(smiles):
- return sf.encoder(smiles)  
-
 def keys_int(symbol_to_int):
   d={}
   i=0
@@ -18,27 +12,17 @@ def keys_int(symbol_to_int):
     i+=1
   return d
 
-def by_max_size(values, max_size):
-    return [value for value in values if len(value) <= max_size]
-
-# Load smiles dataset
-def get_smiles(nb_sample = 2500, max_smiles_size = 30):
-  # Download from MolNet
-  dataset = load_dataset("jxie/guacamol")
-  all_smiles = [data['text'] for data in dataset['train']]
-  smiles_limited_by_size = by_max_size(all_smiles, max_smiles_size)
-  print(len(smiles_limited_by_size))
-  df = pd.DataFrame(data={'smiles': smiles_limited_by_size})
-  data = df[['smiles']].sample(nb_sample, random_state=42)
-  return data['smiles']
-
 def smiles_to_selfies(smiles):
    sf.set_semantic_constraints()  # reset constraints
    constraints = sf.get_semantic_constraints()
    constraints['?'] = 5
    sf.set_semantic_constraints(constraints)
-   selfies_list = np.asanyarray(smiles.apply(preprocess_smiles))
+   selfies_list = np.asanyarray(smiles.apply(sf.encoder))
    return selfies_list
+
+def mols_to_smiles(mols):
+   smiles = [Chem.MolToSmiles(mol) for mol in mols]
+   return smiles
 
 def selfies_to_continous_mols(selfies):
    selfies_alphabet = sf.get_alphabet_from_selfies(selfies)
@@ -55,7 +39,7 @@ def selfies_to_continous_mols(selfies):
    continous_mols = (dequantized_onehots - dequantized_onehots.min()) / (dequantized_onehots.max() - dequantized_onehots.min())
    return continous_mols, selfies_alphabet, largest_selfie_len, int_mol, dequantized_onehots.min(), dequantized_onehots.max()
 
-def mols_continous_to_selfies(continous_mols, selfies_alphabet, largest_selfie_len, int_mol, dequantized_onehots_min, dequantized_onehots_max):
+def continous_mols_to_selfies(continous_mols, selfies_alphabet, largest_selfie_len, int_mol, dequantized_onehots_min, dequantized_onehots_max):
    denormalized_data = continous_mols * (dequantized_onehots_max - dequantized_onehots_min) + dequantized_onehots_min
    quantized_data = torch.floor(denormalized_data)
    quantized_data = torch.clip(quantized_data, 0, 1)
@@ -84,3 +68,14 @@ def selfies_to_mols(selfies_to_convert):
     except Exception:
       pass
   return mols, valid_selfies, valid_count
+
+def discretize_continuous_values(values, num_classes, breakpoints = None):
+  if breakpoints is None:
+    sorted_values = sorted(values)
+    breakpoints = [sorted_values[i * len(values) // num_classes] for i in range(1, num_classes)]
+  discretized_values = []
+  for value in values:
+      class_value = sum(value > breakpoint for breakpoint in breakpoints)
+      discretized_values.append(class_value)
+  return discretized_values, breakpoints
+
