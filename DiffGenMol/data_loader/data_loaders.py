@@ -32,7 +32,7 @@ def get_mols_properties(mols, prop):
     return molsQED
 
 class GuacamolDataLoader():
-    def __init__(self, dataset_size, max_smiles_size, batch_size, num_classes, type_property, shuffle, config):
+    def __init__(self, dataset_size, min_smiles_size, max_smiles_size, batch_size, num_classes, type_property, shuffle, config):
         self.config = config
         self.logger = config.get_logger('train')
 
@@ -44,15 +44,14 @@ class GuacamolDataLoader():
         self.logger.info('Loading dataset')
         dataset = load_dataset("jxie/guacamol")
         train_smiles_complete = [data['text'] for data in dataset['train']]
-
         if max_smiles_size > 0:
-            train_smiles_by_max_size = utils.by_max_size(train_smiles_complete, max_smiles_size)
+            train_smiles_by_max_size = utils.by_size(train_smiles_complete, min_smiles_size ,max_smiles_size)
         else:
             train_smiles_by_max_size = train_smiles_complete
             
         df = pd.DataFrame(data={'smiles': train_smiles_by_max_size})
         
-        df = df[df["smiles"].str.contains("[IH2]") == False] # [IH2] don't convert in selfies
+        df = df[df["smiles"].str.contains('IH2') == False] # [IH2] don't work with selfies
 
         if dataset_size > 0:
             data = df[['smiles']].sample(dataset_size, random_state=42)
@@ -65,7 +64,9 @@ class GuacamolDataLoader():
         self.logger.info('Converting to continuous mols')
         self.train_continous_mols, self.selfies_alphabet, self.largest_selfie_len, self.int_mol, self.dequantized_onehots_min, self.dequantized_onehots_max = utils.selfies_to_continous_mols(self.train_selfies)
         self.seq_length = self.train_continous_mols.shape[1]
-        
+        self.nb_mols = self.train_continous_mols.shape[0]
+        self.logger.info(f'nb_mols: {self.nb_mols}')
+
         # original mols for similarity calculation
         self.train_mols, _, _ = utils.selfies_to_mols(self.train_selfies)
 

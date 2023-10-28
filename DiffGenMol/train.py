@@ -13,7 +13,7 @@ from parse_config import ConfigParser
 os.chdir('.\DiffGenMol')
 
 # fix random seeds for reproducibility
-SEED = 123
+SEED = 2807
 torch.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
@@ -34,7 +34,7 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='DiffGenMol')
-    args.add_argument('-c', '--config', default="config_selfies_heavy.json", type=str,
+    args.add_argument('-c', '--config', default="config_selfies_logp_light.json", type=str,
 
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,

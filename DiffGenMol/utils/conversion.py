@@ -18,6 +18,7 @@ def smiles_to_selfies(smiles):
    constraints['?'] = 5
    constraints['Se'] = 6
    constraints['P-1'] = 6
+   constraints['I'] = 5
    sf.set_semantic_constraints(constraints)
    selfies_list = np.asanyarray(smiles.apply(sf.encoder))
    return selfies_list

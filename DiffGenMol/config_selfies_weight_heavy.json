@@ -1,13 +1,14 @@
 {
-    "name": "DiffGenMol-Selfies",
+    "name": "DiffGenMol-Selfies-Weight",
     "n_gpu": 1,
 
     "data_loader": {
         "type": "GuacamolDataLoader",
         "args":{
-            "dataset_size" : 2500,
-            "max_smiles_size" : 30,
-            "batch_size": 16,
+            "dataset_size" : -1,
+            "min_smiles_size" : 20,
+            "max_smiles_size" : 70,
+            "batch_size": 64,
             "num_classes" : 10,
             "type_property": "Weight",
             "shuffle": true
@@ -16,10 +17,10 @@
     "trainer": {
         "type": "Trainer1D",
         "args":{
-            "timesteps": 300,
+            "timesteps": 1000,
             "epochs": 1000,
             "lr": 1e-4,
-            "unet_dim": 16,
+            "unet_dim": 64,
             "unet_channels" : 1,
             "unet_cond_drop_prob" : 0.5,
             "results_folder" : "logger/",
