@@ -56,6 +56,16 @@ def continous_mols_to_selfies(continous_mols, selfies_alphabet, largest_selfie_l
    selfies = sf.batch_flat_hot_to_selfies(mols_list, int_mol)
    return selfies
 
+def get_valid_selfies(selfies):
+  valid_selfies = []
+  for _, selfie in enumerate(selfies):
+    try:
+      if Chem.MolFromSmiles(sf.decoder(selfie), sanitize=True) is not None:
+         valid_selfies.append(selfie)
+    except Exception:
+      pass
+  return valid_selfies
+
 def selfies_to_mols(selfies_to_convert):
   valid_count = 0
   valid_selfies, invalid_selfies = [], []
@@ -84,5 +94,5 @@ def discretize_continuous_values(values, num_classes, breakpoints = None):
   for value in values:
       class_value = sum(value > breakpoint for breakpoint in breakpoints)
       discretized_values.append(class_value)
-  return discretized_values, breakpoints
+  return torch.tensor(discretized_values), breakpoints
 

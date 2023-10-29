@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Descriptors
+import selfies as sf
 from torch.utils.data import Dataset, DataLoader
 import torch
 from torch import Tensor
@@ -13,7 +14,7 @@ class DatasetSelfies(Dataset):
     def __init__(self, x: np.ndarray, y: Tensor, largest_selfie_len, selfies_alphabet, symbol_to_int):
         super().__init__()
         self.x = x
-        self.y = y.clone()
+        self.y = y
         self.largest_selfie_len = largest_selfie_len
         self.selfies_alphabet = selfies_alphabet
         self.symbol_to_int = symbol_to_int
@@ -34,6 +35,22 @@ def get_mols_properties(mols, prop):
   elif prop == "QED":
     molsQED = [Chem.QED.default(mol) for mol in mols]
     return molsQED
+
+def get_selfies_properties(selfies, prop):
+  props = []
+  for _, selfie in enumerate(selfies):
+    try:
+      mol = Chem.MolFromSmiles(sf.decoder(selfie), sanitize=True)
+      if mol is not None:
+         if prop == "Weight":
+            props.append(Chem.Descriptors.MolWt(mol))
+         elif prop == "LogP":
+            props.append(Chem.Descriptors.MolLogP(mol))
+         elif prop == "QED":
+            props.append(Chem.QED.default(mol))
+    except Exception:
+      pass
+  return props
 
 class GuacamolDataLoader():
     def __init__(self, dataset_size, min_smiles_size, max_smiles_size, batch_size, num_classes, type_property, shuffle, config):
@@ -64,7 +81,7 @@ class GuacamolDataLoader():
         self.train_smiles = df['smiles']
 
         self.logger.info('Converting to selfies')
-        self.train_selfies = utils.smiles_to_selfies(self.train_smiles)
+        self.train_selfies = utils.get_valid_selfies(utils.smiles_to_selfies(self.train_smiles))
         self.logger.info('Calculate selfies features')
         self.largest_selfie_len, self.selfies_alphabet, self.symbol_to_int, self.int_mol = utils.get_selfies_features(self.train_selfies)
         self.seq_length = self.largest_selfie_len * len(self.selfies_alphabet)
@@ -72,22 +89,20 @@ class GuacamolDataLoader():
         self.logger.info(f'nb_mols: {self.nb_mols}')
 
         # original mols for similarity calculation
-        self.train_mols, _, _ = utils.selfies_to_mols(self.train_selfies)
+        #self.train_mols, _, _ = utils.selfies_to_mols(self.train_selfies)
 
         # properties
-        self.logger.info('Calculating molecules properties')
-        self.continuous_properties = get_mols_properties(self.train_mols,self.type_property)
-        self.train_classes, self.classes_breakpoints = utils.discretize_continuous_values(self.continuous_properties, num_classes)
+        self.logger.info('Calculating and discretize molecules properties')
+        self.train_classes, self.classes_breakpoints = utils.discretize_continuous_values(get_selfies_properties(self.train_selfies,self.type_property), self.num_classes)
 
-        self.dataset = DatasetSelfies(self.train_selfies, torch.tensor(self.train_classes), self.largest_selfie_len, self.selfies_alphabet, self.symbol_to_int)
+        self.logger.info('Creating DatasetSelfies')
+        self.dataset = DatasetSelfies(self.train_selfies, self.train_classes, self.largest_selfie_len, self.selfies_alphabet, self.symbol_to_int)
         # create dataloader
+        self.logger.info('Creating DatasetLoader')
         self.dataloader = DataLoader(self.dataset, batch_size=batch_size, shuffle=shuffle)
     
     def get_train_smiles(self):
         return self.train_smiles
-    
-    def get_train_mols(self):
-        return self.train_mols
     
     def get_train_classes(self):
         return self.train_classes
