@@ -7,7 +7,7 @@
         "args":{
             "dataset_size" : -1,
             "min_smiles_size" : 20,
-            "max_smiles_size" : 73,
+            "max_smiles_size" : 60,
             "batch_size": 64,
             "num_classes" : 10,
             "type_property": "LogP",

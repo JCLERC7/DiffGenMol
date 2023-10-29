@@ -1,6 +1,9 @@
+import csv
 from datasets import load_dataset
 import numpy as np
+import os
 import pandas as pd
+import pickle
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 import selfies as sf
@@ -61,39 +64,69 @@ class GuacamolDataLoader():
         self.num_classes = num_classes
         self.type_property = type_property
 
-        # load dataset 
-        self.logger.info('Loading dataset')
-        dataset = load_dataset("jxie/guacamol")
-        train_smiles_prep = [data['text'] for data in dataset['train']]
-
-        if max_smiles_size > 0:
-            train_smiles_prep = utils.by_size(train_smiles_prep, min_smiles_size ,max_smiles_size)
-            
-        df = pd.DataFrame(data={'smiles': train_smiles_prep})
-        
-        df = df[df["smiles"].str.contains('IH2') == False] # [IH2] don't work with selfies
-
-        if dataset_size > 0:
-            df = df[['smiles']].sample(dataset_size, random_state=42)
+        # Load smiles dataset
+        dataset_smiles_pickle = os.path.join(self.config.dataset_dir, 'dataset_guacamol_smiles.pickle')
+        if os.path.isfile(dataset_smiles_pickle):
+            print("Loading existing smiles dataset")
+            self.train_smiles =  pd.read_pickle(dataset_smiles_pickle)
         else:
-            df = df[['smiles']] 
+            self.logger.info('Loading dataset')
+            dataset = load_dataset("jxie/guacamol")
+            train_smiles_prep = [data['text'] for data in dataset['train']]
 
-        self.train_smiles = df['smiles']
+            if max_smiles_size > 0:
+                train_smiles_prep = utils.by_size(train_smiles_prep, min_smiles_size ,max_smiles_size)
+                
+            df = pd.DataFrame(data={'smiles': train_smiles_prep})
+            
+            df = df[df["smiles"].str.contains('IH2') == False] # [IH2] don't work with selfies
+            if dataset_size > 0:
+                df = df[['smiles']].sample(dataset_size, random_state=42)
+            else:
+                df = df[['smiles']] 
 
-        self.logger.info('Converting to selfies')
-        self.train_selfies = utils.get_valid_selfies(utils.smiles_to_selfies(self.train_smiles))
+            self.train_smiles = df['smiles']
+            self.train_smiles.to_pickle(dataset_smiles_pickle)
+            print("Smiles dataset saved")
+
+        # Convert to Selfies
+        dataset_selfies_pickle = os.path.join(self.config.dataset_dir, 'dataset_guacamol_selfies.pickle')
+        if os.path.isfile(dataset_selfies_pickle):
+            print("Loading existing selfies conversion")
+            with open(dataset_selfies_pickle, 'rb') as f:
+                self.train_selfies = pickle.load(f)
+        else:
+            self.logger.info('Converting to selfies')
+            self.train_selfies = utils.get_valid_selfies(utils.smiles_to_selfies(self.train_smiles))
+            with open(dataset_selfies_pickle, 'wb') as f:
+                pickle.dump(self.train_selfies, f)
+            print("Selfies conversion saved")
+        
+        # Calculation Selfies features (alphabet and dico)
         self.logger.info('Calculate selfies features')
         self.largest_selfie_len, self.selfies_alphabet, self.symbol_to_int, self.int_mol = utils.get_selfies_features(self.train_selfies)
         self.seq_length = self.largest_selfie_len * len(self.selfies_alphabet)
         self.nb_mols = len(self.train_selfies)
         self.logger.info(f'nb_mols: {self.nb_mols}')
 
-        # original mols for similarity calculation
-        #self.train_mols, _, _ = utils.selfies_to_mols(self.train_selfies)
+        # Calculation classes
+        classes_pickle = os.path.join(self.config.dataset_dir, 'dataset_guacamol_classes_' + self.type_property + '.pickle')
+        classes_breakpoints_pickle = os.path.join(self.config.dataset_dir, 'dataset_guacamol_classes_' + self.type_property + '_breakpoints.pickle')
 
-        # properties
-        self.logger.info('Calculating and discretize molecules properties')
-        self.train_classes, self.classes_breakpoints = utils.discretize_continuous_values(get_selfies_properties(self.train_selfies,self.type_property), self.num_classes)
+        if os.path.isfile(classes_pickle) and os.path.isfile(classes_breakpoints_pickle):
+            print("Loading existing classes")
+            with open(classes_pickle, 'rb') as f:
+                self.train_classes = pickle.load(f)
+            with open(classes_breakpoints_pickle, 'rb') as f:
+                self.classes_breakpoints = pickle.load(f)
+        else:
+            self.logger.info('Calculating and discretize molecules properties (classes)')
+            self.train_classes, self.classes_breakpoints = utils.discretize_continuous_values(get_selfies_properties(self.train_selfies,self.type_property), self.num_classes)
+            with open(classes_pickle, 'wb') as f:
+                pickle.dump(self.train_classes, f)
+            with open(classes_breakpoints_pickle, 'wb') as f:
+                pickle.dump(self.classes_breakpoints, f)
+            print("Classes and classes breakpoints saved")
 
         self.logger.info('Creating DatasetSelfies')
         self.dataset = DatasetSelfies(self.train_selfies, self.train_classes, self.largest_selfie_len, self.selfies_alphabet, self.symbol_to_int)
