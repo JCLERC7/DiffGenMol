@@ -23,31 +23,31 @@ def smiles_to_selfies(smiles):
    selfies_list = np.asanyarray(smiles.apply(sf.encoder))
    return selfies_list
 
-def mols_to_smiles(mols):
-   smiles = [Chem.MolToSmiles(mol) for mol in mols]
-   return smiles
+def get_selfies_features(selfies):
+  selfies_alphabet = sf.get_alphabet_from_selfies(selfies)
+  selfies_alphabet.add('[nop]')  # Add the "no operation" symbol as a padding character
+  selfies_alphabet.add('.') 
+  selfies_alphabet = list(sorted(selfies_alphabet))
+  largest_selfie_len = max(sf.len_selfies(s) for s in selfies)
+  symbol_to_int = dict((c, i) for i, c in enumerate(selfies_alphabet))
+  int_mol=keys_int(symbol_to_int)
+  return largest_selfie_len, selfies_alphabet, symbol_to_int, int_mol
 
-def selfies_to_continous_mols(selfies):
-   selfies_alphabet = sf.get_alphabet_from_selfies(selfies)
-   selfies_alphabet.add('[nop]')  # Add the "no operation" symbol as a padding character
-   selfies_alphabet.add('.') 
-   selfies_alphabet = list(sorted(selfies_alphabet))
-   largest_selfie_len = max(sf.len_selfies(s) for s in selfies)
-   symbol_to_int = dict((c, i) for i, c in enumerate(selfies_alphabet))
-   int_mol=keys_int(symbol_to_int)
-   onehots=sf.batch_selfies_to_flat_hot(selfies, symbol_to_int,largest_selfie_len)
-   input_tensor = torch.tensor(onehots, dtype=torch.float32)
-   noise_tensor = torch.rand(input_tensor.shape, dtype=torch.float32)
-   dequantized_onehots = input_tensor + noise_tensor
-   continous_mols = (dequantized_onehots - dequantized_onehots.min()) / (dequantized_onehots.max() - dequantized_onehots.min())
-   return continous_mols, selfies_alphabet, largest_selfie_len, int_mol, dequantized_onehots.min(), dequantized_onehots.max()
+def selfies_to_continous_mols(selfies, largest_selfie_len, selfies_alphabet, symbol_to_int):
+   onehots = torch.zeros(len(selfies), largest_selfie_len, len(selfies_alphabet), dtype=torch.float)
+   for i, selfie in enumerate(selfies):
+    one_hot = sf.selfies_to_encoding(selfie, symbol_to_int, largest_selfie_len, enc_type='one_hot')
+    onehots[i, :, :] = torch.tensor(one_hot, dtype=torch.float32)
+   input_tensor = onehots.view(len(selfies), -1)
+   dequantized_onehots = input_tensor.add(torch.rand(input_tensor.shape, dtype=torch.float32))
+   continous_mols = dequantized_onehots.div(2)
+   return continous_mols
 
-def continous_mols_to_selfies(continous_mols, selfies_alphabet, largest_selfie_len, int_mol, dequantized_onehots_min, dequantized_onehots_max):
-   denormalized_data = continous_mols * (dequantized_onehots_max - dequantized_onehots_min) + dequantized_onehots_min
+def continous_mols_to_selfies(continous_mols, selfies_alphabet, largest_selfie_len, int_mol):
+   denormalized_data = continous_mols * 2
    quantized_data = torch.floor(denormalized_data)
    quantized_data = torch.clip(quantized_data, 0, 1)
    mols_list = quantized_data.cpu().int().numpy().tolist()
-   #print(mols_list)
    for mol in mols_list:
     for i in range(largest_selfie_len):
         row = mol[len(selfies_alphabet) * i: len(selfies_alphabet) * (i + 1)]
@@ -71,6 +71,10 @@ def selfies_to_mols(selfies_to_convert):
     except Exception:
       pass
   return mols, valid_selfies, valid_count
+
+def mols_to_smiles(mols):
+   smiles = [Chem.MolToSmiles(mol) for mol in mols]
+   return smiles
 
 def discretize_continuous_values(values, num_classes, breakpoints = None):
   if breakpoints is None:

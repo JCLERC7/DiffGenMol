@@ -55,8 +55,8 @@ class Trainer1D():
         self.train_metrics.reset()
         for step, batch in enumerate(self.data_loader.get_dataloader()):
             self.optimizer.zero_grad()
-            training_mols = batch[0].to(self.device) # normalized from 0 to 1
-            mols_classes = batch[1].to(self.device)    # say 10 classes
+            training_mols = batch['continous_selfies'].to(self.device) # normalized from 0 to 1
+            mols_classes = batch['classe'].to(self.device)    # say 10 classes
 
             loss = self.diffusion(training_mols, classes = mols_classes)
             loss.backward()
@@ -79,7 +79,7 @@ class Trainer1D():
                     
                     samples_continous_mols = torch.squeeze(self.diffusion.sample(samples_classes, cond_scale = 0))
                     samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_largest_selfie_len(), 
-                                                                        self.data_loader.get_int_mol(), self.data_loader.get_dequantized_onehots_min(), self.data_loader.get_dequantized_onehots_max())
+                                                                        self.data_loader.get_int_mol())
                     samples_mols, _, _ = utils.selfies_to_mols(samples_selfies)
                     self.writer.add_image('gen_mol_uncond', transforms.ToTensor()(Chem.Draw.MolToImage(samples_mols[0],size=(300,300))))
 
@@ -88,7 +88,7 @@ class Trainer1D():
                     samples_classes = torch.tensor([i // (nb_mols//self.data_loader.get_num_classes()) for i in range(nb_mols)]).to(self.device)
                     samples_continous_mols = torch.squeeze(self.diffusion.sample(samples_classes, cond_scale = 0))
                     samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_largest_selfie_len(), 
-                                                                        self.data_loader.get_int_mol(), self.data_loader.get_dequantized_onehots_min(), self.data_loader.get_dequantized_onehots_max())
+                                                                        self.data_loader.get_int_mol())
                     samples_mols, _, _ = utils.selfies_to_mols(samples_selfies)
                     samples_smiles = utils.mols_to_smiles(samples_mols)
 
@@ -104,7 +104,7 @@ class Trainer1D():
                     samples_classes = torch.tensor([i // (nb_mols//self.data_loader.get_num_classes()) for i in range(nb_mols)]).to(self.device)
                     samples_continous_mols = torch.squeeze(self.diffusion.sample(samples_classes, cond_scale = 6.))
                     samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_largest_selfie_len(), 
-                                                                        self.data_loader.get_int_mol(), self.data_loader.get_dequantized_onehots_min(), self.data_loader.get_dequantized_onehots_max())
+                                                                        self.data_loader.get_int_mol())
                     samples_mols, _, _ = utils.selfies_to_mols(samples_selfies)
                     
                     self.writer.add_image('gen_mols_cond', transforms.ToTensor()(Chem.Draw.MolsToGridImage(samples_mols, molsPerRow=3, subImgSize=(200,200))))
@@ -114,7 +114,7 @@ class Trainer1D():
                     samples_classes = torch.tensor([i // (nb_mols//self.data_loader.get_num_classes()) for i in range(nb_mols)]).to(self.device)
                     samples_continous_mols = torch.squeeze(self.diffusion.sample(samples_classes, cond_scale = 6.))
                     samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_largest_selfie_len(), 
-                                                                        self.data_loader.get_int_mol(), self.data_loader.get_dequantized_onehots_min(), self.data_loader.get_dequantized_onehots_max())
+                                                                        self.data_loader.get_int_mol())
                     samples_mols, _, _ = utils.selfies_to_mols(samples_selfies)
                     samples_smiles = utils.mols_to_smiles(samples_mols)
 
