@@ -20,7 +20,7 @@
             "timesteps": 1000,
             "epochs": 1000,
             "lr": 1e-3,
-            "unet_dim": 128,
+            "unet_dim": 64,
             "unet_channels" : 1,
             "unet_cond_drop_prob" : 0.5,
             "results_folder" : "logger/",

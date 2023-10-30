@@ -84,7 +84,7 @@ class Trainer1D():
                     self.writer.add_image('gen_mol_uncond', transforms.ToTensor()(Chem.Draw.MolToImage(samples_mols[0],size=(300,300))))
 
                     # metrics
-                    nb_mols = 10 * self.data_loader.get_num_classes()
+                    nb_mols = 5 * self.data_loader.get_num_classes()
                     samples_classes = torch.tensor([i // (nb_mols//self.data_loader.get_num_classes()) for i in range(nb_mols)]).to(self.device)
                     samples_continous_mols = torch.squeeze(self.diffusion.sample(samples_classes, cond_scale = 0))
                     samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_largest_selfie_len(), 
@@ -110,7 +110,7 @@ class Trainer1D():
                     self.writer.add_image('gen_mols_cond', transforms.ToTensor()(Chem.Draw.MolsToGridImage(samples_mols, molsPerRow=3, subImgSize=(200,200))))
 
                     # metrics cond
-                    nb_mols = 10 * self.data_loader.get_num_classes()
+                    nb_mols = 5 * self.data_loader.get_num_classes()
                     samples_classes = torch.tensor([i // (nb_mols//self.data_loader.get_num_classes()) for i in range(nb_mols)]).to(self.device)
                     samples_continous_mols = torch.squeeze(self.diffusion.sample(samples_classes, cond_scale = 6.))
                     samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_largest_selfie_len(), 
