@@ -70,7 +70,7 @@ class Trainer1D():
             self.writer.set_step(writer_step)
             self.train_metrics.update('loss', loss.item())
 
-            if writer_step % 250 == 0:
+            if writer_step % 2000 == 0:
                 with torch.no_grad():
                     # unconditional
                     # image
