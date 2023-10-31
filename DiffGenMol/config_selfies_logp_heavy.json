@@ -6,7 +6,7 @@
     "data_loader": {
         "type": "GuacamolDataLoader",
         "args":{
-            "dataset_size" : 2500,
+            "dataset_size" : 1046529,
             "min_smiles_size" : 20,
             "max_smiles_size" : 60,
             "batch_size": 64,
