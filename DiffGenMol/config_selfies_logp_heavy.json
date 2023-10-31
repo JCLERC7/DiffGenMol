@@ -9,7 +9,7 @@
             "dataset_size" : 1046529,
             "min_smiles_size" : 20,
             "max_smiles_size" : 60,
-            "batch_size": 64,
+            "batch_size": 32,
             "num_classes" : 10,
             "type_property": "LogP",
             "shuffle": true
