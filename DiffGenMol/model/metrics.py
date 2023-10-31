@@ -6,6 +6,7 @@ from rdkit.Chem.Fingerprints.FingerprintMols import FingerprintMol
 from rdkit.DataStructs import FingerprintSimilarity
 from rdkit import RDLogger
 RDLogger.DisableLog('rdApp.*')  # suppress error messages
+from guacamol.utils.sampling_helpers import sample_valid_molecules
 from guacamol.distribution_learning_benchmark import ValidityBenchmark, UniquenessBenchmark, NoveltyBenchmark, \
     KLDivBenchmark
 from guacamol.distribution_matching_generator import DistributionMatchingGenerator
@@ -38,23 +39,24 @@ def validity_score(smiles):
 def uniqueness_score(smiles):
     with torch.no_grad():
       generator = MockGenerator(smiles)
+      generator = MockGenerator(sample_valid_molecules(generator, len(smiles)))
       benchmark = UniquenessBenchmark(number_samples=len(smiles))
     return benchmark.assess_model(generator).score
 
 def novelty_score(gen_smiles, train_smiles):
     with torch.no_grad():
       generator = MockGenerator(gen_smiles)
+      generator = MockGenerator(sample_valid_molecules(generator, len(gen_smiles)))
       benchmark = NoveltyBenchmark(number_samples=len(gen_smiles), training_set=train_smiles)
     return benchmark.assess_model(generator).score
 
 def KLdiv_score(gen_smiles, train_smiles):
     with torch.no_grad():
       generator = MockGenerator(gen_smiles)
+      generator = MockGenerator(sample_valid_molecules(generator, len(gen_smiles)))
       benchmark = KLDivBenchmark(number_samples=len(gen_smiles), training_set=train_smiles)
       result = benchmark.assess_model(generator)
     return result.score
-
-
 
 def accuracy_valid_conversion_selfies_to_smiles(selfies):
     with torch.no_grad():

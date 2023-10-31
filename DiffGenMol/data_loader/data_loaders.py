@@ -1,5 +1,6 @@
 import csv
 from datasets import load_dataset
+from multiprocessing import cpu_count
 import numpy as np
 import os
 import pandas as pd
@@ -132,10 +133,16 @@ class GuacamolDataLoader():
         self.dataset = DatasetSelfies(self.train_selfies, self.train_classes, self.largest_selfie_len, self.selfies_alphabet, self.symbol_to_int)
         # create dataloader
         self.logger.info('Creating DatasetLoader')
-        self.dataloader = DataLoader(self.dataset, batch_size=batch_size, shuffle=shuffle)
+        self.dataloader = DataLoader(self.dataset, batch_size=batch_size, shuffle=shuffle, pin_memory = True, num_workers = cpu_count())
+    
+    def get_batch_size(self):
+        return self.batch_size
     
     def get_train_smiles(self):
         return self.train_smiles
+    
+    def get_nb_mols(self):
+        return self.nb_mols
     
     def get_train_classes(self):
         return self.train_classes

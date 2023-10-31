@@ -1,6 +1,7 @@
 {
     "name": "DiffGenMol-Selfies-LogP",
     "n_gpu": 1,
+    "save_dir": "saved/",
 
     "data_loader": {
         "type": "GuacamolDataLoader",
@@ -18,15 +19,16 @@
         "type": "Trainer1D",
         "args":{
             "timesteps": 300,
-            "epochs": 1000,
-            "lr": 1e-4,
+            "train_num_steps": 700000,
+            "train_lr": 8e-5,
             "unet_dim": 16,
             "unet_channels" : 1,
             "unet_cond_drop_prob" : 0.5,
-            "results_folder" : "logger/",
-            "save_dir": "saved/",
-            "save_period": 1,
-            "tensorboard": true
+            "eval_and_sample_every" : 1000,
+            "save_model_every" : 4000,
+            "num_samples" : 20,
+            "amp" : true,
+            "tensorboard" : true
         }
     }
 }

@@ -1,7 +1,7 @@
 import argparse
 import collections
 import numpy as np
-import os
+#import os
 import torch
 from data_loader import data_loaders
 from trainer import trainers
@@ -10,7 +10,7 @@ from torch.optim import Adam
 from parse_config import ConfigParser
 
 # change workspace
-os.chdir('.\DiffGenMol')
+#os.chdir('.\DiffGenMol')
 
 # fix random seeds for reproducibility
 SEED = 2807
@@ -35,7 +35,6 @@ def main(config):
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='DiffGenMol')
     args.add_argument('-c', '--config', default="config_selfies_logp_light.json", type=str,
-
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')
