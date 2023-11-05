@@ -1,7 +1,6 @@
 import argparse
 import collections
 import numpy as np
-#import os
 import torch
 from data_loader import data_loaders
 from trainer import trainers
@@ -22,11 +21,11 @@ np.random.seed(SEED)
 def main(config):
     logger = config.get_logger('train')
 
-    # setup data_loader instances
+    # setup data_loader instance
     data_loader = config.init_obj('data_loader', data_loaders, config=config)
     logger.info(data_loader)
-    logger.info(f'seq_length: {data_loader.get_seq_length()}')
     
+    # setup trainer instance
     trainer = config.init_obj('trainer', trainers, config=config, data_loader=data_loader)
     logger.info(trainer)
 
@@ -34,7 +33,7 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='DiffGenMol')
-    args.add_argument('-c', '--config', default="config_selfies_logp_light_qm9.json", type=str,
+    args.add_argument('-c', '--config', default="config_selfies_logp_heavy_qm9.json", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')

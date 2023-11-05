@@ -1,7 +1,10 @@
+import numpy as np
+import os
 import torch
 import utils
 from rdkit import Chem
 from rdkit.Chem import Descriptors
+from rdkit.Chem import RDConfig
 from rdkit.Chem.Fingerprints.FingerprintMols import FingerprintMol
 from rdkit.DataStructs import FingerprintSimilarity
 from rdkit import RDLogger
@@ -10,7 +13,12 @@ from guacamol.utils.sampling_helpers import sample_valid_molecules
 from guacamol.distribution_learning_benchmark import ValidityBenchmark, UniquenessBenchmark, NoveltyBenchmark, \
     KLDivBenchmark
 from guacamol.distribution_matching_generator import DistributionMatchingGenerator
+from scipy.stats import wasserstein_distance
+import sys
 from typing import List
+sys.path.append(os.path.join(RDConfig.RDContribDir, 'SA_Score'))
+import sascorer
+
 
 
 class MockGenerator(DistributionMatchingGenerator):
@@ -71,6 +79,8 @@ def accuracy_match_classes(mols, classes, prop, num_classes, breakpoints):
         prop_values = [Chem.Descriptors.MolLogP(mol) for mol in mols]
     elif prop == "QED":
         prop_values = [Chem.QED.default(mol) for mol in mols]
+    elif prop == "SAS":
+        prop_values = [sascorer.calculateScore(mol) for mol in mols]
     true_classes, _ = utils.discretize_continuous_values(prop_values, num_classes, breakpoints)
     nb_diff = 0
     for c1, c2 in zip(classes, true_classes):
@@ -109,20 +119,6 @@ def top3_tanimoto_similarity_score(gen_mols, train_mols):
          scores += sum(scores_list)
     return scores / (len(gen_mols)*3)
 
-def top3_tanimoto_similarity_score_cond(gen_mols, gen_classes, train_mols, train_classes, nb_classes):
-   with torch.no_grad():
-      scores = 0
-      for classe in range(nb_classes):
-        gen_mols_cond = [gen_mols[i] for i in range(len(gen_classes)) if gen_classes[i] == classe]
-        train_mols_cond = [train_mols[i] for i in range(len(train_classes)) if train_classes[i] == classe]
-        scores += top3_tanimoto_similarity_score(gen_mols_cond, train_mols_cond)
-   return scores / nb_classes
-
-def KLdiv_score_cond(gen_smiles, gen_classes, train_smiles, train_classes, nb_classes):
-   with torch.no_grad():
-      scores = 0
-      for classe in range(nb_classes):
-        gen_smiles_cond = [gen_smiles[i] for i in range(len(gen_classes)) if gen_classes[i] == classe]
-        train_smiles_cond = [train_smiles[i] for i in range(len(train_classes)) if train_classes[i] == classe]
-        scores += KLdiv_score(gen_smiles_cond, train_smiles_cond)
-   return scores / nb_classes
+def wasserstein_distance_score(gen_values, train_values):
+  w_distance = wasserstein_distance(gen_values, train_values)
+  return w_distance

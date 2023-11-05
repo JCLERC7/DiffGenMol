@@ -1,10 +1,20 @@
 import json
+import math
 import torch
 import pandas as pd
 from pathlib import Path
 from itertools import repeat
 from collections import OrderedDict
 
+def get_values_by_classe(values, classes, selected_classe):
+        selected_values = []
+        for idx, classe in enumerate(classes):
+            if classe == selected_classe:
+                selected_values.append(values[idx])
+        return selected_values
+
+def has_int_squareroot(num):
+    return (math.sqrt(num) ** 2) == num
 
 def ensure_dir(dirname):
     dirname = Path(dirname)
@@ -68,4 +78,3 @@ class MetricTracker:
 
     def result(self):
         return dict(self._data.average)
-

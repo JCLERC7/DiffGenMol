@@ -1,2 +1,2 @@
-from .conversion import *
+from .molecule import *
 from .util import *
