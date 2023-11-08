@@ -19,16 +19,21 @@ def keys_int(symbol_to_int):
     i+=1
   return d
 
-def smiles_to_selfies(smiles):
+def smiles_to_selfies(smiles, classname):
+   if classname == 'GuacamolDataLoader':
+    sf.set_semantic_constraints()  # reset constraints
+    constraints = sf.get_semantic_constraints()
+    constraints['?'] = 5
+    constraints['Se'] = 6
+    constraints['P-1'] = 6
+    constraints['I'] = 5
+    sf.set_semantic_constraints(constraints)
+    
    selfies_list = np.asanyarray(smiles.apply(sf.encoder))
    return selfies_list
 
 def get_selfies_features(selfies):
   selfies_alphabet = sf.get_alphabet_from_selfies(selfies)
-  #selfies_alphabet.add('[no1]')
-  #selfies_alphabet.add('[no2]')
-  #selfies_alphabet.add('[no3]')
-  #selfies_alphabet.add('[no4]')  
   selfies_alphabet.add('[nop]')  # Add the "no operation" symbol as a padding character
   selfies_alphabet.add('.') 
   selfies_alphabet = list(sorted(selfies_alphabet))
@@ -42,35 +47,22 @@ def selfies_to_continous_mols(selfies, largest_selfie_len, selfies_alphabet, sym
    for i, selfie in enumerate(selfies):
     one_hot = sf.selfies_to_encoding(selfie, symbol_to_int, largest_selfie_len, enc_type='one_hot')
     onehots[i, :, :] = torch.tensor(one_hot, dtype=torch.float32)
-   #input_tensor = onehots.view(len(selfies), -1)
-   #dequantized_onehots = input_tensor.add(torch.rand(input_tensor.shape, dtype=torch.float32))
-   dequantized_onehots = onehots.add(torch.rand(onehots.shape, dtype=torch.float32))
+   input_tensor = onehots.view(len(selfies), -1)
+   dequantized_onehots = input_tensor.add(torch.rand(input_tensor.shape, dtype=torch.float32))
    continous_mols = dequantized_onehots.div(2)
    return continous_mols
 
-def one_selfies_to_continous_mol(selfies, largest_selfie_len, symbol_to_int):
-   one_hot = sf.selfies_to_encoding(selfies, symbol_to_int, largest_selfie_len, enc_type='one_hot')
-   onehot = torch.tensor(one_hot, dtype=torch.float32)
-   dequantized_onehot = onehot.add(torch.rand(onehot.shape, dtype=torch.float32))
-   continous_mol = dequantized_onehot.div(2)
-   return continous_mol
-
-def continous_mols_to_selfies(continous_mols, selfies_alphabet, int_mol):
+def continous_mols_to_selfies(continous_mols, selfies_alphabet, largest_selfie_len, int_mol):
    denormalized_data = continous_mols * 2
    quantized_data = torch.floor(denormalized_data)
    quantized_data = torch.clip(quantized_data, 0, 1)
-   for mol in quantized_data:
-    for letter in mol:
-      if all(elem == 0 for elem in letter):
-        letter[len(selfies_alphabet)] = 1
-   #mols_list = quantized_data.cpu().int().numpy().tolist()
-   #for mol in mols_list:
-   # for i in range(largest_selfie_len):
-   #     row = mol[len(selfies_alphabet) * i: len(selfies_alphabet) * (i + 1)]
-   #     if all(elem == 0 for elem in row):
-   #         mol[len(selfies_alphabet) * (i+1) - 1] = 1
-   selfies = [sf.encoding_to_selfies(mol.cpu().tolist(), int_mol, enc_type="one_hot") for mol in quantized_data]
-   #sf.batch_flat_hot_to_selfies(mols_list, int_mol)
+   mols_list = quantized_data.cpu().int().numpy().tolist()
+   for mol in mols_list:
+    for i in range(largest_selfie_len):
+        row = mol[len(selfies_alphabet) * i: len(selfies_alphabet) * (i + 1)]
+        if all(elem == 0 for elem in row):
+            mol[len(selfies_alphabet) * (i+1) - 1] = 1
+   selfies = sf.batch_flat_hot_to_selfies(mols_list, int_mol)
    return selfies
 
 def get_valid_selfies(selfies):

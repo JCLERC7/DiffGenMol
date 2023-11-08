@@ -23,7 +23,7 @@ class DatasetSelfies(Dataset):
         return len(self.x)
 
     def __getitem__(self, idx):
-        return {'continous_selfies': utils.one_selfies_to_continous_mol(self.x[idx], self.largest_selfie_len, self.symbol_to_int), 'classe': self.y[idx]}
+        return {'continous_selfies': utils.selfies_to_continous_mols([self.x[idx]], self.largest_selfie_len, self.selfies_alphabet, self.symbol_to_int), 'classe': self.y[idx]}
 
 class QM9DataLoaderSelfies():
     def __init__(self, dataset_size, min_smiles_size, max_smiles_size, batch_size, num_classes, type_property, shuffle, config):
@@ -74,7 +74,7 @@ class QM9DataLoaderSelfies():
                 self.train_selfies = pickle.load(f)
         else:
             self.logger.info('Converting to selfies')
-            self.train_selfies = utils.get_valid_selfies(utils.smiles_to_selfies(self.train_smiles))
+            self.train_selfies = utils.get_valid_selfies(utils.smiles_to_selfies(self.train_smiles, self.__class__.__name__))
             with open(dataset_selfies_pickle, 'wb') as f:
                 pickle.dump(self.train_selfies, f)
             print("Selfies conversion saved")
@@ -82,15 +82,13 @@ class QM9DataLoaderSelfies():
         # Calculation Selfies features (alphabet and dico)
         self.logger.info('Calculate selfies features')
         self.largest_selfie_len, self.selfies_alphabet, self.symbol_to_int, self.int_mol = utils.get_selfies_features(self.train_selfies)
-
+        
         # Rendre seq_length divisible par 8
-        #while self.largest_selfie_len * len(self.selfies_alphabet) % 8 != 0:
-        #    self.largest_selfie_len += 1
+        while self.largest_selfie_len * len(self.selfies_alphabet) % 8 != 0:
+            self.largest_selfie_len += 1
 
-        #self.seq_length = self.largest_selfie_len * len(self.selfies_alphabet)
-        self.seq_length = len(self.selfies_alphabet)
+        self.seq_length = self.largest_selfie_len * len(self.selfies_alphabet)
         self.logger.info(f'seq_length: {self.seq_length}')
-        self.logger.info(f'channels: {self.largest_selfie_len}')
         self.nb_mols = len(self.train_selfies)
 
 

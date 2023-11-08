@@ -47,9 +47,8 @@ class Trainer1D(object):
         model = None,
         gradient_accumulate_every = 2,
         train_lr = 1e-4,
-        train_num_steps = 50000,
-        #ema_update_every = 10,
-        ema_update_every = 144,
+        train_num_steps = 100000,
+        ema_update_every = 10,
         ema_decay = 0.995,
         adam_betas = (0.9, 0.99),
         eval_and_sample_every = 1000,
@@ -81,7 +80,7 @@ class Trainer1D(object):
                         dim = unet_dim,
                         dim_mults = (1, 2, 4, 8),
                         num_classes = self.data_loader.get_num_classes(),
-                        channels = self.data_loader.get_largest_selfie_len(),
+                        channels = unet_channels,
                         cond_drop_prob = unet_cond_drop_prob
                         )
             
@@ -253,7 +252,8 @@ class Trainer1D(object):
         _num_samples = (self.num_samples // self.data_loader.get_num_classes()) * self.data_loader.get_num_classes()
         samples_classes = torch.tensor([i // (_num_samples//self.data_loader.get_num_classes()) for i in range(_num_samples)]).to(self.device)
         samples_continous_mols = torch.squeeze(self.ema.ema_model.sample(samples_classes, cond_scale = 0))
-        samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_int_mol())
+        samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_largest_selfie_len(), 
+                                                            self.data_loader.get_int_mol())
         samples_mols, _, _ = utils.selfies_to_mols(samples_selfies)
         samples_smiles = utils.mols_to_smiles(samples_mols)
         samples_smiles = utils.canonicalize_smiles(samples_smiles)
@@ -298,7 +298,8 @@ class Trainer1D(object):
         _num_samples = (self.num_samples // self.data_loader.get_num_classes()) * self.data_loader.get_num_classes()
         samples_classes = torch.tensor([i // (_num_samples//self.data_loader.get_num_classes()) for i in range(_num_samples)]).to(self.device)
         samples_continous_mols = torch.squeeze(self.ema.ema_model.sample(samples_classes, cond_scale = 6.))
-        samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_int_mol())
+        samples_selfies = utils.continous_mols_to_selfies(samples_continous_mols, self.data_loader.get_selfies_alphabet(), self.data_loader.get_largest_selfie_len(), 
+                                                            self.data_loader.get_int_mol())
         samples_mols, _, _ = utils.selfies_to_mols(samples_selfies)
         samples_smiles = utils.mols_to_smiles(samples_mols)
         samples_smiles = utils.canonicalize_smiles(samples_smiles)
