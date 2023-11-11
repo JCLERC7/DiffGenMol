@@ -1,3 +1,4 @@
+import deepchem as dc
 from guacamol.utils.chemistry import canonicalize
 import numpy as np
 import os
@@ -25,10 +26,10 @@ def smiles_to_selfies(smiles):
 
 def get_selfies_features(selfies):
   selfies_alphabet = sf.get_alphabet_from_selfies(selfies)
-  #selfies_alphabet.add('[no1]')
-  #selfies_alphabet.add('[no2]')
-  #selfies_alphabet.add('[no3]')
-  #selfies_alphabet.add('[no4]')  
+  if '[/F]' not in selfies_alphabet:
+    selfies_alphabet.add('[/F]')
+  if '[\\CH1-1]' not in selfies_alphabet:
+    selfies_alphabet.add('[\\CH1-1]')
   selfies_alphabet.add('[nop]')  # Add the "no operation" symbol as a padding character
   selfies_alphabet.add('.') 
   selfies_alphabet = list(sorted(selfies_alphabet))
@@ -37,13 +38,25 @@ def get_selfies_features(selfies):
   int_mol=keys_int(symbol_to_int)
   return largest_selfie_len, selfies_alphabet, symbol_to_int, int_mol
 
+def get_smiles_features(smiles):
+  smiles_alphabet = ['#', ')', '(', '+', '-', '/', '1', '3', '2', '5', '4', '7', '6', '8', 
+                     '=', '@', 'C', 'B', 'F', 'I', 'H', 'O', 'N', 'S', '[', ']', '\\', 'c',
+                       'l', 'o', 'n', 'p', 's', 'r', 'Br', 'Cl', 'Cn', 'Sc', 'Se']
+  largest_smiles_len = len(max(smiles, key=len))
+  return largest_smiles_len, smiles_alphabet
+
 def selfies_to_continous_mols(selfies, largest_selfie_len, selfies_alphabet, symbol_to_int):
    onehots = torch.zeros(len(selfies), largest_selfie_len, len(selfies_alphabet), dtype=torch.float)
    for i, selfie in enumerate(selfies):
     one_hot = sf.selfies_to_encoding(selfie, symbol_to_int, largest_selfie_len, enc_type='one_hot')
     onehots[i, :, :] = torch.tensor(one_hot, dtype=torch.float32)
-   #input_tensor = onehots.view(len(selfies), -1)
-   #dequantized_onehots = input_tensor.add(torch.rand(input_tensor.shape, dtype=torch.float32))
+   dequantized_onehots = onehots.add(torch.rand(onehots.shape, dtype=torch.float32))
+   continous_mols = dequantized_onehots.div(2)
+   return continous_mols
+
+def smiles_to_continous_mols(smiles, featurizer):
+   encodings = featurizer.featurize(smiles)
+   onehots = torch.tensor(encodings, dtype=torch.float32)
    dequantized_onehots = onehots.add(torch.rand(onehots.shape, dtype=torch.float32))
    continous_mols = dequantized_onehots.div(2)
    return continous_mols
@@ -55,6 +68,13 @@ def one_selfies_to_continous_mol(selfies, largest_selfie_len, symbol_to_int):
    continous_mol = dequantized_onehot.div(2)
    return continous_mol
 
+def one_smiles_to_continous_mol(smiles, featurizer):
+  encodings = featurizer.featurize([smiles])
+  onehot = torch.tensor(encodings.squeeze(), dtype=torch.float32)
+  dequantized_onehot = onehot.add(torch.rand(onehot.shape, dtype=torch.float32))
+  continous_mol = dequantized_onehot.div(2)
+  return continous_mol
+
 def continous_mols_to_selfies(continous_mols, selfies_alphabet, int_mol):
    denormalized_data = continous_mols * 2
    quantized_data = torch.floor(denormalized_data)
@@ -63,15 +83,20 @@ def continous_mols_to_selfies(continous_mols, selfies_alphabet, int_mol):
     for letter in mol:
       if all(elem == 0 for elem in letter):
         letter[len(selfies_alphabet)] = 1
-   #mols_list = quantized_data.cpu().int().numpy().tolist()
-   #for mol in mols_list:
-   # for i in range(largest_selfie_len):
-   #     row = mol[len(selfies_alphabet) * i: len(selfies_alphabet) * (i + 1)]
-   #     if all(elem == 0 for elem in row):
-   #         mol[len(selfies_alphabet) * (i+1) - 1] = 1
    selfies = [sf.encoding_to_selfies(mol.cpu().tolist(), int_mol, enc_type="one_hot") for mol in quantized_data]
-   #sf.batch_flat_hot_to_selfies(mols_list, int_mol)
    return selfies
+
+def continous_mols_to_smiles(continous_mols, featurizer):
+  denormalized_data = continous_mols * 2
+  quantized_data = torch.floor(denormalized_data)
+  quantized_data = torch.clip(quantized_data, 0, 1)
+  for mol in quantized_data:
+    for letter in mol:
+      if all(elem == 0 for elem in letter):
+        letter[-1] = 1
+  smiles = [featurizer.untransform(mol.cpu().tolist()) for mol in quantized_data]
+  return smiles
+
 
 def get_valid_selfies(selfies):
   valid_selfies = []
@@ -83,21 +108,69 @@ def get_valid_selfies(selfies):
       pass
   return valid_selfies
 
+def get_valid_smiles(smiles):
+  valid_smiles = []
+  for _, smile in enumerate(smiles):
+    try:
+      if Chem.MolFromSmiles(smile, sanitize=True) is not None:
+         valid_smiles.append(smile)
+    except Exception:
+      pass
+  return valid_smiles
+
+def get_valid_smiles_and_classes(smiles_to_split, classes):
+  valid_smiles, valid_classes = [], []
+  for idx, smiles in enumerate(smiles_to_split):
+    try:
+      if Chem.MolFromSmiles(smiles, sanitize=True) is not None:
+          valid_smiles.append(smiles)
+          valid_classes.append(classes[idx])
+    except Exception:
+      pass
+  return valid_smiles, valid_classes
+
+def split_selfies_and_classes(selfies_to_split, classes):
+  valid_selfies, valid_classes = [], []
+  for idx, selfies in enumerate(selfies_to_split):
+    try:
+      if Chem.MolFromSmiles(sf.decoder(selfies), sanitize=True) is not None:
+          valid_selfies.append(selfies)
+          valid_classes.append(classes[idx])
+    except Exception:
+      pass
+  return valid_selfies, valid_classes
+
 def selfies_to_mols(selfies_to_convert):
   valid_count = 0
   valid_selfies, invalid_selfies = [], []
   mols = []
   for idx, selfies in enumerate(selfies_to_convert):
     try:
-      if Chem.MolFromSmiles(sf.decoder(selfies_to_convert[idx]), sanitize=True) is not None:
+      if Chem.MolFromSmiles(sf.decoder(selfies), sanitize=True) is not None:
           valid_count += 1
           valid_selfies.append(selfies)
-          mols.append(Chem.MolFromSmiles(sf.decoder(selfies_to_convert[idx])))
+          mols.append(Chem.MolFromSmiles(sf.decoder(selfies)))
       else:
         invalid_selfies.append(selfies)
     except Exception:
       pass
   return mols, valid_selfies, valid_count
+
+def smiles_to_mols(smiles_to_convert):
+  valid_count = 0
+  valid_smiles, invalid_smiles = [], []
+  mols = []
+  for idx, smiles in enumerate(smiles_to_convert):
+    try:
+      if Chem.MolFromSmiles(smiles, sanitize=True) is not None:
+          valid_count += 1
+          valid_smiles.append(smiles)
+          mols.append(Chem.MolFromSmiles(smiles))
+      else:
+        invalid_smiles.append(smiles)
+    except Exception:
+      pass
+  return mols, valid_smiles, valid_count
 
 def mols_to_smiles(mols):
    smiles = [Chem.MolToSmiles(mol) for mol in mols]

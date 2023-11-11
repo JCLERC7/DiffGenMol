@@ -53,9 +53,6 @@ def prepare_device(n_gpu_use):
     list_ids = list(range(n_gpu_use))
     return device, list_ids
 
-def by_size(values, min_size, max_size):
-    return [value for value in values if len(value) >= min_size and len(value) <= max_size]
-
 class MetricTracker:
     def __init__(self, *keys, writer=None):
         self.writer = writer

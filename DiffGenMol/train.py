@@ -4,14 +4,9 @@ import numpy as np
 import torch
 from data_loader import data_loaders
 from trainer import trainers
-from torchvision.utils import save_image
-from torch.optim import Adam
 from parse_config import ConfigParser
 
-# change workspace
-#os.chdir('.\DiffGenMol')
-
-# fix random seeds for reproducibility
+# Random seeds for reproducibility
 SEED = 2807
 torch.manual_seed(SEED)
 torch.backends.cudnn.deterministic = True
@@ -20,7 +15,15 @@ np.random.seed(SEED)
 
 def main(config):
     logger = config.get_logger('train')
-
+    logger.info('###############')
+    logger.info('DiffGenMol V1.0')
+    logger.info('###############')
+    logger.info('Authors : Charbonnier Frédéric and Clerc Joël, 2023')
+    logger.info('Licence : CC BY')
+    logger.info('Based on: Phil Wang''s GitHub (Lucidrains, diffusion 1D)')
+    logger.info('Comments: Created as part of the Master in Information Sciences research project "Learning to generate molecules"')
+    logger.info('at the Haute école de gestion de Genève')
+    logger.info('###############')
     # setup data_loader instance
     data_loader = config.init_obj('data_loader', data_loaders, config=config)
     logger.info(data_loader)
@@ -33,14 +36,11 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='DiffGenMol')
-    args.add_argument('-c', '--config', default="config_selfies_logp_heavy_qm9.json", type=str,
+    # config json
+    args.add_argument('-c', '--config', default="config_smiles_logp_heavy_qm9.json", type=str,
                       help='config file path (default: None)')
-    args.add_argument('-r', '--resume', default=None, type=str,
-                      help='path to latest checkpoint (default: None)')
-    args.add_argument('-d', '--device', default=None, type=str,
-                      help='indices of GPUs to enable (default: all)')
 
-    # custom cli options to modify configuration from default values given in json file.
+    # custom cli options
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
         CustomArgs(['--lr', '--learning_rate'], type=float, target='trainer;args;lr'),

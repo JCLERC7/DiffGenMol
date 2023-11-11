@@ -66,10 +66,9 @@ def KLdiv_score(gen_smiles, train_smiles):
       result = benchmark.assess_model(generator)
     return result.score
 
-def accuracy_valid_conversion_selfies_to_smiles(selfies):
+def accuracy_syntax_validity(valid_samples, all_samples):
     with torch.no_grad():
-        _, _, valid_count = utils.selfies_to_mols(selfies)
-    return valid_count / len(selfies)
+      return len(valid_samples) / len(all_samples)
 
 def accuracy_match_classes(mols, classes, prop, num_classes, breakpoints):
   with torch.no_grad():
@@ -86,7 +85,7 @@ def accuracy_match_classes(mols, classes, prop, num_classes, breakpoints):
     for c1, c2 in zip(classes, true_classes):
         if c1 != c2:
             nb_diff += 1
-  return (len(classes)-nb_diff)/len(classes)
+  return (len(classes)-nb_diff)/len(classes), true_classes
 
 # Calculate similarity
 def tanimoto_similarity(database_mols, query_mol):
