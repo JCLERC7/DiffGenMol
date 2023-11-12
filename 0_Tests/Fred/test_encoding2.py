@@ -48,7 +48,7 @@ print(smiles)
 
 smiles = ['CCC','CCC','Cn1cnc2c1c(=O)n(C)c(=O)n2C','CC(=O)N1CN(C(C)=O)[C@@H](O)[C@@H]1O']
 
-largest_smiles_len, smiles_alphabet = utils.get_smiles_features(smiles)
+largest_smiles_len, smiles_alphabet = utils.preprocess_smiles(smiles)
 featurizer = dc.feat.OneHotFeaturizer(charset=smiles_alphabet, max_length=largest_smiles_len)
 
 print('test')

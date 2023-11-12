@@ -51,7 +51,7 @@ class Trainer1D(object):
         gradient_accumulate_every = 2,
         train_lr = 1e-4,
         train_num_steps = 50000,
-        ema_update_every = 144,
+        ema_update_every = 434,
         ema_decay = 0.995,
         adam_betas = (0.9, 0.99),
         eval_and_sample_every = 1000,
@@ -278,7 +278,7 @@ class Trainer1D(object):
           samples_valid_smiles = utils.mols_to_smiles(samples_valid_mols)
         # QM9DataLoaderSmiles
         else:
-          samples_smiles_raw = utils.continous_mols_to_smiles(samples_continous_mols_raw, self.data_loader.get_featurizer())
+          samples_smiles_raw = utils.continous_mols_to_smiles(samples_continous_mols_raw, self.data_loader.get_featurizer(), self.data_loader.get_replace_dict())
           samples_valid_smiles = utils.get_valid_smiles(samples_smiles_raw)
           accuracy_syntax_validity = metrics.accuracy_syntax_validity(samples_valid_smiles, samples_smiles_raw)
           samples_valid_mols, _, _ = utils.smiles_to_mols(samples_valid_smiles)

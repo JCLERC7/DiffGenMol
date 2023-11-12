@@ -37,7 +37,7 @@ def main(config):
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='DiffGenMol')
     # config json
-    args.add_argument('-c', '--config', default="config_smiles_logp_heavy_qm9.json", type=str,
+    args.add_argument('-c', '--config', default="config_smiles_logp_light_qm9.json", type=str,
                       help='config file path (default: None)')
 
     # custom cli options

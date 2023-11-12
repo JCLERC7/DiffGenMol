@@ -22,7 +22,7 @@
             "unet_dim": 256,
             "unet_channels" : 1,
             "unet_cond_drop_prob" : 0.5,
-            "eval_and_sample_every" : 5000,
+            "eval_and_sample_every" : 10000,
             "num_samples" : 100,
             "num_samples_final_eval" : 500,
             "objective" : "pred_noise",
