@@ -23,7 +23,7 @@
             "unet_channels" : 1,
             "unet_cond_drop_prob" : 0.5,
             "eval_and_sample_every" : 10000,
-            "num_samples" : 500,
+            "num_samples" : 200,
             "num_samples_final_eval" : 1000,
             "objective" : "pred_noise",
             "beta_schedule" : "cosine",
