@@ -246,13 +246,13 @@ class QM9DataLoaderSmiles():
         
         # Preprocess and calculation Smiles features (alphabet)
         self.logger.info('Preprocessus and calculate smiles features')
-        self.train_smiles, self.replace_dict, self.smiles_alphabet, self.largest_value_len = utils.preprocess_smiles(self.train_smiles)
+        self.train_smiles_encoded, self.replace_dict, self.smiles_alphabet, self.largest_value_len = utils.preprocess_smiles(self.train_smiles)
 
         self.seq_length = len(self.smiles_alphabet)+1
 
         self.logger.info(f'seq_length: {self.seq_length}')
         self.logger.info(f'channels: {self.largest_value_len}')
-        self.nb_mols = len(self.train_smiles)
+        self.nb_mols = len(self.train_smiles_encoded)
 
         # Calculation properties and classes
         prop_weight_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_weight.pickle')
@@ -299,7 +299,7 @@ class QM9DataLoaderSmiles():
  
         self.featurizer = dc.feat.OneHotFeaturizer(charset=self.smiles_alphabet, max_length=self.largest_value_len)
         self.logger.info('Creating DatasetSmiles')
-        self.dataset = DatasetSmiles(self.train_smiles, self.train_classes, self.featurizer)
+        self.dataset = DatasetSmiles(self.train_smiles_encoded, self.train_classes, self.featurizer)
         # create dataloader
         self.logger.info('Creating DatasetLoader')
         self.dataloader = DataLoader(self.dataset, batch_size=batch_size, shuffle=shuffle, pin_memory = True, num_workers = cpu_count())
