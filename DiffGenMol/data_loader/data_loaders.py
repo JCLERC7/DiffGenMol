@@ -245,7 +245,7 @@ class QM9DataLoaderSmiles():
         assert utils.has_int_squareroot(len(self.train_smiles)), 'number of samples must have an integer square root'
         
         # Preprocess and calculation Smiles features (alphabet)
-        self.logger.info('Preprocessus and calculate smiles features')
+        self.logger.info('Preprocess and calculate smiles features')
         self.train_smiles_encoded, self.replace_dict, self.smiles_alphabet, self.largest_value_len = utils.preprocess_smiles(self.train_smiles)
 
         self.seq_length = len(self.smiles_alphabet)+1
