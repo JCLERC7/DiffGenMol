@@ -290,27 +290,37 @@ class Trainer1D(object):
 
         # at least 1 valid molecule
         if accuracy_syntax_validity > 0:
-          self.train_metrics.update('A_UC_02_mol_validity_samples', metrics.validity_score(samples_valid_smiles))
-          self.train_metrics.update('A_UC_03_uniqueness_samples', metrics.uniqueness_score(samples_valid_smiles))
-          self.train_metrics.update('A_UC_04_novelty_samples', metrics.novelty_score(samples_valid_smiles, self.data_loader.get_train_smiles()))
-          self.train_metrics.update('A_UC_05_KLdiv_samples', metrics.KLdiv_score(samples_valid_smiles, self.data_loader.get_train_smiles()))
-
-          self.writer.add_histogram('A_UC_06b_distr_weight_samples',torch.FloatTensor(utils.get_smiles_properties(samples_valid_smiles,'Weight')))
-          w_distance_weight = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,'Weight'), self.data_loader.get_prop_weight())
-          self.train_metrics.update('A_UC_06c_wasserstein_distance_weight', w_distance_weight)
-          self.writer.add_histogram('A_UC_07b_distr_logp_samples',torch.FloatTensor(utils.get_smiles_properties(samples_valid_smiles,'LogP')))
-          w_distance_logp = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,'LogP'), self.data_loader.get_prop_logp())
-          self.train_metrics.update('A_UC_07c_wasserstein_distance_logp', w_distance_logp)
-          self.writer.add_histogram('A_UC_08b_distr_qed_samples',torch.FloatTensor(utils.get_smiles_properties(samples_valid_smiles,'QED')))
-          w_distance_qed = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,'QED'), self.data_loader.get_prop_qed())
-          self.train_metrics.update('A_UC_08c_wasserstein_distance_qed', w_distance_qed)
-          self.writer.add_histogram('A_UC_09b_distr_sas_samples',torch.FloatTensor(utils.get_smiles_properties(samples_valid_smiles,'SAS')))
-          w_distance_sas = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,'SAS'), self.data_loader.get_prop_sas())
-          self.train_metrics.update('A_UC_09c_wasserstein_distance_sas',w_distance_sas)
-          self.train_metrics.update('A_UC_10_wasserstein_distance_sum_props',w_distance_weight+w_distance_logp+w_distance_qed+w_distance_sas)      
+          try:
+            self.train_metrics.update('A_UC_02_mol_validity_samples', metrics.validity_score(samples_valid_smiles))
+            self.train_metrics.update('A_UC_03_uniqueness_samples', metrics.uniqueness_score(samples_valid_smiles))
+            self.train_metrics.update('A_UC_04_novelty_samples', metrics.novelty_score(samples_valid_smiles, self.data_loader.get_train_smiles()))
+            self.train_metrics.update('A_UC_05_KLdiv_samples', metrics.KLdiv_score(samples_valid_smiles, self.data_loader.get_train_smiles()))
+          except Exception:
+            pass
+          
+          try:
+            self.writer.add_histogram('A_UC_06b_distr_weight_samples',torch.FloatTensor(utils.get_smiles_properties(samples_valid_smiles,'Weight')))
+            w_distance_weight = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,'Weight'), self.data_loader.get_prop_weight())
+            self.train_metrics.update('A_UC_06c_wasserstein_distance_weight', w_distance_weight)
+            self.writer.add_histogram('A_UC_07b_distr_logp_samples',torch.FloatTensor(utils.get_smiles_properties(samples_valid_smiles,'LogP')))
+            w_distance_logp = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,'LogP'), self.data_loader.get_prop_logp())
+            self.train_metrics.update('A_UC_07c_wasserstein_distance_logp', w_distance_logp)
+            self.writer.add_histogram('A_UC_08b_distr_qed_samples',torch.FloatTensor(utils.get_smiles_properties(samples_valid_smiles,'QED')))
+            w_distance_qed = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,'QED'), self.data_loader.get_prop_qed())
+            self.train_metrics.update('A_UC_08c_wasserstein_distance_qed', w_distance_qed)
+            self.writer.add_histogram('A_UC_09b_distr_sas_samples',torch.FloatTensor(utils.get_smiles_properties(samples_valid_smiles,'SAS')))
+            w_distance_sas = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,'SAS'), self.data_loader.get_prop_sas())
+            self.train_metrics.update('A_UC_09c_wasserstein_distance_sas',w_distance_sas)
+            self.train_metrics.update('A_UC_10_wasserstein_distance_sum_props',w_distance_weight+w_distance_logp+w_distance_qed+w_distance_sas)      
+          except Exception:
+            pass
+          
           # image
-          self.writer.add_image('A_UC_11_mol_sample', transforms.ToTensor()(Chem.Draw.MolToImage(samples_valid_mols[0],size=(300,300))))
-
+          try:
+            self.writer.add_image('A_UC_11_mol_sample', transforms.ToTensor()(Chem.Draw.MolToImage(samples_valid_mols[0],size=(300,300))))
+          except Exception:
+            pass
+          
         # only first eval
         if self.step == self.eval_and_sample_every:
             self.writer.add_histogram('A_UC_06a_distr_weight_train',torch.FloatTensor(self.data_loader.get_prop_weight()))
@@ -352,43 +362,53 @@ class Trainer1D(object):
 
         # at least 1 valid molecule
         if accuracy_syntax_validity > 0:
-          self.train_metrics.update('B_C_02_mol_validity_samples', metrics.validity_score(samples_valid_smiles))
-          self.train_metrics.update('B_C_03_uniqueness_samples', metrics.uniqueness_score(samples_valid_smiles))
-          self.train_metrics.update('B_C_04_novelty_samples', metrics.novelty_score(samples_valid_smiles, self.data_loader.get_train_smiles()))
-          self.train_metrics.update('B_C_05_KLdiv_samples', metrics.KLdiv_score(samples_valid_smiles, self.data_loader.get_train_smiles()))
-            
-          prop_samples = utils.get_smiles_properties(samples_valid_smiles,self.data_loader.get_type_property())
-          self.writer.add_histogram('B_C_06b_distr_prop_samples',torch.FloatTensor(prop_samples))
-          w_distance = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,self.data_loader.get_type_property()), self.data_loader.get_train_prop())
-          self.train_metrics.update('B_C_06c_wasserstein_distance_prop', w_distance)
-          self.writer.add_histogram('B_C_07b_distr_classe_1_samples',torch.FloatTensor(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 0),self.data_loader.get_type_property())))
-          classe_1_w_distance = metrics.wasserstein_distance_score(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 0),self.data_loader.get_type_property()), utils.get_values_by_classe(self.data_loader.get_train_prop(), self.data_loader.get_train_classes(), 0))
-          self.train_metrics.update('B_C_07c_wasserstein_distance_classe_1', classe_1_w_distance)
-          self.writer.add_histogram('B_C_08b_distr_classe_2_samples',torch.FloatTensor(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 1),self.data_loader.get_type_property())))
-          classe_2_w_distance = metrics.wasserstein_distance_score(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 1),self.data_loader.get_type_property()), utils.get_values_by_classe(self.data_loader.get_train_prop(), self.data_loader.get_train_classes(), 1))
-          self.train_metrics.update('B_C_08c_wasserstein_distance_classe_2', classe_2_w_distance)
-          self.writer.add_histogram('B_C_09b_distr_classe_3_samples',torch.FloatTensor(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 2),self.data_loader.get_type_property())))
-          classe_3_w_distance = metrics.wasserstein_distance_score(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 2),self.data_loader.get_type_property()), utils.get_values_by_classe(self.data_loader.get_train_prop(), self.data_loader.get_train_classes(), 2))
-          self.train_metrics.update('B_C_09c_wasserstein_distance_classe_3', classe_3_w_distance)
-          self.train_metrics.update('B_C_10_wasserstein_distance_sum_classes', classe_1_w_distance+classe_2_w_distance+classe_3_w_distance)
-          accuracy_match_classes, true_classes = metrics.accuracy_match_classes(samples_valid_mols, samples_valid_classes, self.data_loader.get_type_property(), self.data_loader.get_num_classes(), self.data_loader.get_classes_breakpoints())
-          self.train_metrics.update('B_C_11_classes_match', accuracy_match_classes)
+          try:
+            self.train_metrics.update('B_C_02_mol_validity_samples', metrics.validity_score(samples_valid_smiles))
+            self.train_metrics.update('B_C_03_uniqueness_samples', metrics.uniqueness_score(samples_valid_smiles))
+            self.train_metrics.update('B_C_04_novelty_samples', metrics.novelty_score(samples_valid_smiles, self.data_loader.get_train_smiles()))
+            self.train_metrics.update('B_C_05_KLdiv_samples', metrics.KLdiv_score(samples_valid_smiles, self.data_loader.get_train_smiles()))
+          except Exception:
+            pass
+
+          try:      
+            prop_samples = utils.get_smiles_properties(samples_valid_smiles,self.data_loader.get_type_property())
+            self.writer.add_histogram('B_C_06b_distr_prop_samples',torch.FloatTensor(prop_samples))
+            w_distance = metrics.wasserstein_distance_score(utils.get_smiles_properties(samples_valid_smiles,self.data_loader.get_type_property()), self.data_loader.get_train_prop())
+            self.train_metrics.update('B_C_06c_wasserstein_distance_prop', w_distance)
+            self.writer.add_histogram('B_C_07b_distr_classe_1_samples',torch.FloatTensor(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 0),self.data_loader.get_type_property())))
+            classe_1_w_distance = metrics.wasserstein_distance_score(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 0),self.data_loader.get_type_property()), utils.get_values_by_classe(self.data_loader.get_train_prop(), self.data_loader.get_train_classes(), 0))
+            self.train_metrics.update('B_C_07c_wasserstein_distance_classe_1', classe_1_w_distance)
+            self.writer.add_histogram('B_C_08b_distr_classe_2_samples',torch.FloatTensor(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 1),self.data_loader.get_type_property())))
+            classe_2_w_distance = metrics.wasserstein_distance_score(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 1),self.data_loader.get_type_property()), utils.get_values_by_classe(self.data_loader.get_train_prop(), self.data_loader.get_train_classes(), 1))
+            self.train_metrics.update('B_C_08c_wasserstein_distance_classe_2', classe_2_w_distance)
+            self.writer.add_histogram('B_C_09b_distr_classe_3_samples',torch.FloatTensor(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 2),self.data_loader.get_type_property())))
+            classe_3_w_distance = metrics.wasserstein_distance_score(utils.get_smiles_properties(utils.get_values_by_classe(samples_valid_smiles, samples_valid_classes, 2),self.data_loader.get_type_property()), utils.get_values_by_classe(self.data_loader.get_train_prop(), self.data_loader.get_train_classes(), 2))
+            self.train_metrics.update('B_C_09c_wasserstein_distance_classe_3', classe_3_w_distance)
+            self.train_metrics.update('B_C_10_wasserstein_distance_sum_classes', classe_1_w_distance+classe_2_w_distance+classe_3_w_distance)
+            accuracy_match_classes, true_classes = metrics.accuracy_match_classes(samples_valid_mols, samples_valid_classes, self.data_loader.get_type_property(), self.data_loader.get_num_classes(), self.data_loader.get_classes_breakpoints())
+            self.train_metrics.update('B_C_11_classes_match', accuracy_match_classes)
+          except Exception:
+            pass
+          
           # image
-          samples_valid_mols_cond = []
-          max_mol_by_classe = 4
-          classe_start = 0
-          cpt_mol_by_class = 0
-          # Select mols for each classe
-          for idx, mol in enumerate(samples_valid_mols):
-            if samples_valid_classes[idx] != classe_start:
-                classe_start = samples_valid_classes[idx]
-                cpt_mol_by_class = 0
-            if cpt_mol_by_class <= max_mol_by_classe:
-                samples_valid_mols_cond.append(mol)
-                cpt_mol_by_class += 1
+          try:
+            samples_valid_mols_cond = []
+            max_mol_by_classe = 4
+            classe_start = 0
+            cpt_mol_by_class = 0
+            # Select mols for each classe
+            for idx, mol in enumerate(samples_valid_mols):
+                if samples_valid_classes[idx] != classe_start:
+                    classe_start = samples_valid_classes[idx]
+                    cpt_mol_by_class = 0
+                if cpt_mol_by_class <= max_mol_by_classe:
+                    samples_valid_mols_cond.append(mol)
+                    cpt_mol_by_class += 1
 
-          self.writer.add_image('B_C_12_mol_samples', transforms.ToTensor()(Chem.Draw.MolsToGridImage(samples_valid_mols_cond, molsPerRow=max_mol_by_classe, subImgSize=(300,300))))
-
+            self.writer.add_image('B_C_12_mol_samples', transforms.ToTensor()(Chem.Draw.MolsToGridImage(samples_valid_mols_cond, molsPerRow=max_mol_by_classe, subImgSize=(300,300))))
+          except Exception:
+            pass
+          
           # sample
           # QM9DataLoaderSelfies
           if self.data_loader.__class__.__name__ == 'QM9DataLoaderSelfies':
