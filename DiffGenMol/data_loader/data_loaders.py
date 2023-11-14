@@ -1,4 +1,5 @@
 import deepchem as dc
+import deepsmiles
 from multiprocessing import cpu_count
 import numpy as np
 import os
@@ -246,7 +247,8 @@ class QM9DataLoaderSmiles():
         
         # Preprocess and calculation Smiles features (alphabet)
         self.logger.info('Preprocess and calculate smiles features')
-        self.train_smiles_encoded, self.replace_dict, self.smiles_alphabet, self.largest_value_len = utils.preprocess_smiles(self.train_smiles)
+        self.deepsmiles_converter = deepsmiles.Converter(rings=True, branches=True)
+        self.train_smiles_encoded, self.replace_dict, self.smiles_alphabet, self.largest_value_len = utils.preprocess_smiles(self.train_smiles, self.deepsmiles_converter)
 
         self.seq_length = len(self.smiles_alphabet)+1
 
@@ -364,4 +366,7 @@ class QM9DataLoaderSmiles():
     
     def get_replace_dict(self):
         return self.replace_dict
+    
+    def get_deepsmiles_converter(self):
+        return self.deepsmiles_converter
 

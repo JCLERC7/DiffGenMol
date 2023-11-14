@@ -278,7 +278,7 @@ class Trainer1D(object):
           samples_valid_smiles = utils.mols_to_smiles(samples_valid_mols)
         # QM9DataLoaderSmiles
         else:
-          samples_smiles_raw = utils.continous_mols_to_smiles(samples_continous_mols_raw, self.data_loader.get_featurizer(), self.data_loader.get_replace_dict())
+          samples_smiles_raw = utils.continous_mols_to_smiles(samples_continous_mols_raw, self.data_loader.get_featurizer(), self.data_loader.get_replace_dict(), self.data_loader.get_deepsmiles_converter())
           samples_valid_smiles = utils.get_valid_smiles(samples_smiles_raw)
           accuracy_syntax_validity = metrics.accuracy_syntax_validity(samples_valid_smiles, samples_smiles_raw)
           samples_valid_mols, _, _ = utils.smiles_to_mols(samples_valid_smiles)
@@ -340,7 +340,7 @@ class Trainer1D(object):
           samples_valid_smiles = utils.mols_to_smiles(samples_valid_mols)
         # QM9DataLoaderSmiles
         else:
-          samples_smiles_raw = utils.continous_mols_to_smiles(samples_continous_mols_raw, self.data_loader.get_featurizer(), self.data_loader.get_replace_dict())
+          samples_smiles_raw = utils.continous_mols_to_smiles(samples_continous_mols_raw, self.data_loader.get_featurizer(), self.data_loader.get_replace_dict(), self.data_loader.get_deepsmiles_converter())
           samples_valid_smiles, samples_valid_classes = utils.get_valid_smiles_and_classes(samples_smiles_raw, samples_classes_raw)
           accuracy_syntax_validity = metrics.accuracy_syntax_validity(samples_valid_smiles, samples_smiles_raw)
           samples_valid_mols, _, _ = utils.smiles_to_mols(samples_valid_smiles)

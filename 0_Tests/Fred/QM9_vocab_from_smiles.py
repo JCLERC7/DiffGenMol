@@ -1,3 +1,5 @@
+import deepsmiles
+
 from enum import Enum
 from typing import Iterable, List, Union
 
@@ -136,17 +138,20 @@ class SmilesTokenizer:
             return err
         else:
             raise ValueError(err, smiles)
-        
+
+converter = deepsmiles.Converter(rings=True, branches=True)
+
 _, datasets, _ = dc.molnet.load_qm9(featurizer='ECFP')
 train_smiles_prep = pd.DataFrame(data={'smiles': datasets[0].ids})
 
 # Canonicalize smiles
 train_smiles_prep['smiles'] = utils.canonicalize_smiles(train_smiles_prep['smiles'])
-
+#train_smiles_prep['smiles'] = train_smiles_prep['smiles'].apply(converter.encode)
 vocab = get_vocab_from_smiles(train_smiles_prep['smiles'])
 print(f"\nGenerated vocab with {len(vocab)} tokens.")
 print(vocab)
 
-replace_dict = {'Cn': 'a','[C@@H]':'b', '[C@@]':'d', '[C@H+]':'e', '[C@H]':'f', '[C@]':'g', '[CH+]':'h', '[CH-]':'i', '[CH2+]':'j', '[CH2-]':'k', '[CH]':'l', '[H]':'m', '[N+]':'p', '[N@@H+]':'q', '[N@H+]':'r', '[NH+]':'s', '[NH-]':'t', '[NH2+]':'u', '[NH3+]':'v', '[O-]':'w', '[OH+]':'x', '[cH+]':'y', '[cH-]':'z', '[n+]':'A', '[nH+]':'B', '[nH]':'D', '\\':'E'}
+#replace_dict = {'Cn': 'a','[C@@H]':'b', '[C@@]':'d', '[C@H+]':'e', '[C@H]':'f', '[C@]':'g', '[CH+]':'h', '[CH-]':'i', '[CH2+]':'j', '[CH2-]':'k', '[CH]':'l', '[H]':'m', '[N+]':'p', '[N@@H+]':'q', '[N@H+]':'r', '[NH+]':'s', '[NH-]':'t', '[NH2+]':'u', '[NH3+]':'v', '[O-]':'w', '[OH+]':'x', '[cH+]':'y', '[cH-]':'z', '[n+]':'A', '[nH+]':'B', '[nH]':'D', '\\':'E'}
 
-['#', '(', ')', '-', '.', '/', '1', '2', '3', '4', '5', '6', '=', 'A','B','C', 'D','E', 'F', 'N', 'O', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r','s','t','u','v','w','x','y','z']
+#['#', ')', '-', '.', '/', '3', '4', '5', '6', '7', '8', '9', '=', 'C', 'Cn', 'F', 'N', 'O', '[C@@H]', '[C@@]', '[C@H+]', '[C@H]', '[C@]', '[CH+]', '[CH-]', '[CH2+]', '[CH2-]', '[CH]', '[H]', '[N+]', '[N@@H+]', '[N@H+]', '[NH+]', '[NH-]', '[NH2+]', '[NH3+]', '[O-]', '[OH+]', '[cH+]', '[cH-]', '[n+]', '[nH+]', '[nH]', '\\', 'c', 'n', 'o']
+#['#', '(', ')', '-', '.', '/', '1', '2', '3', '4', '5', '6', '=', 'C', 'Cn', 'F', 'N', 'O', '[C@@H]', '[C@@]', '[C@H+]', '[C@H]', '[C@]', '[CH+]', '[CH-]', '[CH2+]', '[CH2-]', '[CH]', '[H]', '[N+]', '[N@@H+]', '[N@H+]', '[NH+]', '[NH-]', '[NH2+]', '[NH3+]', '[O-]', '[OH+]', '[cH+]', '[cH-]', '[n+]', '[nH+]', '[nH]', '\\', 'c', 'n', 'o']

@@ -1,4 +1,5 @@
 import deepchem as dc
+import deepsmiles
 from guacamol.utils.chemistry import canonicalize
 import numpy as np
 import os
@@ -21,9 +22,10 @@ def keys_int(symbol_to_int):
     i+=1
   return d
 
-def preprocess_smiles(smiles):
+def preprocess_smiles(smiles, deepsmiles_converter):
+  smiles = smiles.apply(deepsmiles_converter.encode)
   replace_dict = {'Cn': 'a','[C@@H]':'b', '[C@@]':'d', '[C@H+]':'e', '[C@H]':'f', '[C@]':'g', '[CH+]':'h', '[CH-]':'i', '[CH2+]':'j', '[CH2-]':'k', '[CH]':'l', '[H]':'m', '[N+]':'p', '[N@@H+]':'q', '[N@H+]':'r', '[NH+]':'s', '[NH-]':'t', '[NH2+]':'u', '[NH3+]':'v', '[O-]':'w', '[OH+]':'x', '[cH+]':'y', '[cH-]':'z', '[n+]':'A', '[nH+]':'B', '[nH]':'D', '\\':'E'}
-  smiles_alphabet = ['#', '(', ')', '-', '.', '/', '1', '2', '3', '4', '5', '6', '=', 'A','B','C', 'D','E', 'F', 'N', 'O', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r','s','t','u','v','w','x','y','z']
+  smiles_alphabet = ['#', ')', '-', '.', '/', '3', '4', '5', '6', '7', '8', '9', '=', 'A','B','C', 'D','E', 'F', 'N', 'O', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r','s','t','u','v','w','x','y','z']
   
   for pattern, repl in replace_dict.items():
     smiles = smiles.str.replace(
@@ -32,11 +34,19 @@ def preprocess_smiles(smiles):
   largest_smiles_len = len(max(smiles, key=len))
   return smiles, replace_dict, smiles_alphabet, largest_smiles_len
 
-def postprocess_smiles(smiles, replace_dict):
+def decode_deepsmiles(smiles, deepsmiles_converter):
+  try:
+    smiles = deepsmiles_converter.decode(smiles)
+    return smiles
+  except deepsmiles.DecodeError as e:
+    return smiles
+
+def postprocess_smiles(smiles, replace_dict, deepsmiles_converter):
   for pattern, repl in replace_dict.items():
     smiles = smiles.str.replace(
         repl, pattern
     )
+  smiles = smiles.apply(decode_deepsmiles,deepsmiles_converter=deepsmiles_converter)
   return smiles
 
 def smiles_to_selfies(smiles):
@@ -98,7 +108,7 @@ def continous_mols_to_selfies(continous_mols, selfies_alphabet, int_mol):
    selfies = [sf.encoding_to_selfies(mol.cpu().tolist(), int_mol, enc_type="one_hot") for mol in quantized_data]
    return selfies
 
-def continous_mols_to_smiles(continous_mols, featurizer, replace_dict):
+def continous_mols_to_smiles(continous_mols, featurizer, replace_dict, deepsmiles_converter):
   denormalized_data = continous_mols * 2
   quantized_data = torch.floor(denormalized_data)
   quantized_data = torch.clip(quantized_data, 0, 1)
@@ -108,7 +118,7 @@ def continous_mols_to_smiles(continous_mols, featurizer, replace_dict):
         letter[-1] = 1
   smiles = [featurizer.untransform(mol.cpu().tolist()) for mol in quantized_data]
   df_smiles = pd.DataFrame(smiles, columns=['smiles'])
-  smiles = postprocess_smiles(df_smiles['smiles'], replace_dict)
+  smiles = postprocess_smiles(df_smiles['smiles'], replace_dict, deepsmiles_converter)
   return smiles.values.tolist()
 
 
