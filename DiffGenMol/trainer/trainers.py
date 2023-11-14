@@ -331,10 +331,13 @@ class Trainer1D(object):
         # sample
         # QM9DataLoaderSelfies
         if self.data_loader.__class__.__name__ == 'QM9DataLoaderSelfies':
-            df = pd.DataFrame(samples_selfies_raw, columns=["selfies"])
-            df.to_csv(f'{self.result_dir}/selfies-uc-{step}.csv', index=False)
-
-        df = pd.DataFrame(samples_smiles_raw, columns=["smiles"])
+           df = pd.DataFrame(samples_selfies_raw, columns=["selfies"])
+           df.to_csv(f'{self.result_dir}/selfies-uc-{step}.csv', index=False)
+           df = pd.DataFrame(samples_valid_smiles, columns=["smiles"])
+        # QM9DataLoaderSmiles
+        else:
+           df = pd.DataFrame(samples_smiles_raw, columns=["smiles"])
+           
         df.to_csv(f'{self.result_dir}/smiles-uc-{step}.csv', index=False)
 
         # conditional

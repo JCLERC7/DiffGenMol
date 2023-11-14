@@ -151,9 +151,9 @@ def get_valid_smiles_and_classes(smiles_to_split, classes):
           valid_classes.append(classes[idx])
     except Exception:
       pass
-  return valid_smiles, valid_classes
+  return valid_smiles, torch.tensor(valid_classes)
 
-def split_selfies_and_classes(selfies_to_split, classes):
+def get_valid_selfies_and_classes(selfies_to_split, classes):
   valid_selfies, valid_classes = [], []
   for idx, selfies in enumerate(selfies_to_split):
     try:
@@ -162,7 +162,7 @@ def split_selfies_and_classes(selfies_to_split, classes):
           valid_classes.append(classes[idx])
     except Exception:
       pass
-  return valid_selfies, valid_classes
+  return valid_selfies, torch.tensor(valid_classes)
 
 def selfies_to_mols(selfies_to_convert):
   valid_count = 0
