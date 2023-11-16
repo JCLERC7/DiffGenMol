@@ -1,5 +1,5 @@
 {
-    "name": "DiffGenMol-Selfies-LogP-With-Can",
+    "name": "DiffGenMol-Selfies-LogP-Without-Can",
     "n_gpu": 1,
     "save_dir": "saved/",
 
