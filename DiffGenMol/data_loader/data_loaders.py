@@ -29,7 +29,7 @@ class DatasetSelfies(Dataset):
 
 # Selfies Loader
 class QM9DataLoaderSelfies():
-    def __init__(self, dataset_size, batch_size, num_classes, type_property, shuffle, config):
+    def __init__(self, dataset_size, batch_size, num_classes, type_property, canonicalize_smiles, shuffle, config):
         self.config = config
         self.logger = config.get_logger('train')
 
@@ -38,17 +38,24 @@ class QM9DataLoaderSelfies():
         self.type_property = type_property
 
         # Load smiles dataset
-        dataset_smiles_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_smiles.pickle')
+        if canonicalize_smiles:
+            dataset_smiles_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_can_smiles.pickle')
+        else:
+            dataset_smiles_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_smiles.pickle')
         if os.path.isfile(dataset_smiles_pickle):
-            print("Loading existing smiles dataset")
+            self.logger.info('Loading existing smiles dataset')
             self.train_smiles =  pd.read_pickle(dataset_smiles_pickle)
         else:
             self.logger.info('Loading dataset')
             _, datasets, _ = dc.molnet.load_qm9(featurizer='ECFP')
             train_smiles_prep = pd.DataFrame(data={'smiles': datasets[0].ids})
 
-            # Canonicalize smiles
-            train_smiles_prep['smiles'] = utils.canonicalize_smiles(train_smiles_prep['smiles'])
+            if canonicalize_smiles:
+                self.logger.info('With Canonicalisation')
+                # Canonicalize smiles
+                train_smiles_prep['smiles'] = utils.canonicalize_smiles(train_smiles_prep['smiles'])
+            else:
+                self.logger.info('Without Canonicalisation')
 
             if dataset_size > 0:
                 train_smiles_prep = train_smiles_prep[['smiles']][:dataset_size]
@@ -57,17 +64,24 @@ class QM9DataLoaderSelfies():
 
             self.train_smiles = train_smiles_prep['smiles']
             self.train_smiles.to_pickle(dataset_smiles_pickle)
-            self.train_smiles.to_csv(f'{self.config.dataset_dir}/dataset_QM9_sf_train_smiles.csv', index=False)
-            print("Smiles dataset saved")
+            if canonicalize_smiles:
+                self.train_smiles.to_csv(f'{self.config.dataset_dir}/dataset_QM9_sf_train_can_smiles.csv', index=False)
+            else:
+                self.train_smiles.to_csv(f'{self.config.dataset_dir}/dataset_QM9_sf_train_smiles.csv', index=False)
+            self.logger.info('Smiles dataset saved')
         
         self.logger.info(f'dataset_size: {len(self.train_smiles)}')
         self.logger.info(f'dataset_max_length: {self.train_smiles.str.len().max()}')
         assert utils.has_int_squareroot(len(self.train_smiles)), 'number of samples must have an integer square root'
 
         # Convert to Selfies
-        dataset_selfies_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_selfies.pickle')
+        if canonicalize_smiles:
+            dataset_selfies_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_can_selfies.pickle')
+        else:
+            dataset_selfies_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_selfies.pickle')
+
         if os.path.isfile(dataset_selfies_pickle):
-            print("Loading existing selfies conversion")
+            self.logger.info('Loading existing selfies conversion')
             with open(dataset_selfies_pickle, 'rb') as f:
                 self.train_selfies = pickle.load(f)
         else:
@@ -75,7 +89,7 @@ class QM9DataLoaderSelfies():
             self.train_selfies = utils.get_valid_selfies(utils.smiles_to_selfies(self.train_smiles))
             with open(dataset_selfies_pickle, 'wb') as f:
                 pickle.dump(self.train_selfies, f)
-            print("Selfies conversion saved")
+            self.logger.info('Selfies conversion saved')
         
         # Calculation Selfies features (alphabet and dico)
         self.logger.info('Calculate selfies features')
@@ -89,15 +103,22 @@ class QM9DataLoaderSelfies():
 
 
         # Calculation properties and classes
-        prop_weight_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_prop_weight.pickle')
-        prop_logp_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_prop_logp.pickle')
-        prop_qed_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_prop_qed.pickle')
-        prop_sas_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_prop_sas.pickle')
-        classes_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_classes_' + self.type_property + '.pickle')
-        classes_breakpoints_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_classes_' + self.type_property + '_breakpoints.pickle')
-
+        if canonicalize_smiles:
+            prop_weight_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_can_prop_weight.pickle')
+            prop_logp_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_can_prop_logp.pickle')
+            prop_qed_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_can_prop_qed.pickle')
+            prop_sas_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_can_prop_sas.pickle')
+            classes_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_can_classes_' + self.type_property + '.pickle')
+            classes_breakpoints_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_can_classes_' + self.type_property + '_breakpoints.pickle')
+        else:
+            prop_weight_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_prop_weight.pickle')
+            prop_logp_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_prop_logp.pickle')
+            prop_qed_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_prop_qed.pickle')
+            prop_sas_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_prop_sas.pickle')
+            classes_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_classes_' + self.type_property + '.pickle')
+            classes_breakpoints_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sf_classes_' + self.type_property + '_breakpoints.pickle')
         if os.path.isfile(prop_weight_pickle) and os.path.isfile(prop_logp_pickle) and os.path.isfile(prop_qed_pickle) and os.path.isfile(prop_sas_pickle) and os.path.isfile(classes_pickle) and os.path.isfile(classes_breakpoints_pickle):
-            print("Loading existing properties and classes")
+            self.logger.info('Loading existing properties and classes')
             with open(prop_weight_pickle, 'rb') as f:
                 self.prop_weight = pickle.load(f)
             with open(prop_logp_pickle, 'rb') as f:
@@ -129,7 +150,7 @@ class QM9DataLoaderSelfies():
                 pickle.dump(self.train_classes, f)
             with open(classes_breakpoints_pickle, 'wb') as f:
                 pickle.dump(self.classes_breakpoints, f)
-            print("Properties and classes breakpoints saved")
+            self.logger.info('Properties and classes breakpoints saved')
 
         self.logger.info('Creating DatasetSelfies')
         self.dataset = DatasetSelfies(self.train_selfies, self.train_classes, self.largest_value_len, self.selfies_alphabet, self.symbol_to_int)
@@ -210,7 +231,7 @@ class DatasetSmiles(Dataset):
         return {'continous_vectors': utils.one_smiles_to_continous_mol(self.x[idx], self.featurizer), 'classe': self.y[idx]}
 
 class QM9DataLoaderSmiles():
-    def __init__(self, dataset_size, batch_size, num_classes, type_property, shuffle, config):
+    def __init__(self, dataset_size, batch_size, num_classes, type_property, canonicalize_smiles, shuffle, config):
         self.config = config
         self.logger = config.get_logger('train')
 
@@ -219,7 +240,11 @@ class QM9DataLoaderSmiles():
         self.type_property = type_property
 
         # Load smiles dataset
-        dataset_smiles_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_smiles.pickle')
+        if canonicalize_smiles:
+            dataset_smiles_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_can_smiles.pickle')
+        else:
+            dataset_smiles_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_smiles.pickle')
+        
         if os.path.isfile(dataset_smiles_pickle):
             print("Loading existing smiles dataset")
             self.train_smiles =  pd.read_pickle(dataset_smiles_pickle)
@@ -228,8 +253,12 @@ class QM9DataLoaderSmiles():
             _, datasets, _ = dc.molnet.load_qm9(featurizer='ECFP')
             train_smiles_prep = pd.DataFrame(data={'smiles': datasets[0].ids})
 
-            # Canonicalize smiles
-            train_smiles_prep['smiles'] = utils.canonicalize_smiles(train_smiles_prep['smiles'])
+            if canonicalize_smiles:
+                self.logger.info('With Canonicalisation')
+                # Canonicalize smiles
+                train_smiles_prep['smiles'] = utils.canonicalize_smiles(train_smiles_prep['smiles'])
+            else:
+                self.logger.info('Without Canonicalisation')
 
             if dataset_size > 0:
                 train_smiles_prep = train_smiles_prep[['smiles']][:dataset_size]
@@ -238,7 +267,11 @@ class QM9DataLoaderSmiles():
 
             self.train_smiles = train_smiles_prep['smiles']
             self.train_smiles.to_pickle(dataset_smiles_pickle)
-            self.train_smiles.to_csv(f'{self.config.dataset_dir}/dataset_QM9_sm_train_smiles.csv', index=False)
+            if canonicalize_smiles:
+                self.train_smiles.to_csv(f'{self.config.dataset_dir}/dataset_QM9_sm_can_train_smiles.csv', index=False)
+            else:
+                self.train_smiles.to_csv(f'{self.config.dataset_dir}/dataset_QM9_sm_train_smiles.csv', index=False)
+
             print("Smiles dataset saved")
         
         self.logger.info(f'dataset_size: {len(self.train_smiles)}')
@@ -257,13 +290,21 @@ class QM9DataLoaderSmiles():
         self.nb_mols = len(self.train_smiles_encoded)
 
         # Calculation properties and classes
-        prop_weight_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_weight.pickle')
-        prop_logp_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_logp.pickle')
-        prop_qed_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_qed.pickle')
-        prop_sas_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_sas.pickle')
-        classes_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_classes_' + self.type_property + '.pickle')
-        classes_breakpoints_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_classes_' + self.type_property + '_breakpoints.pickle')
-
+        if canonicalize_smiles:
+            prop_weight_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_can_prop_weight.pickle')
+            prop_logp_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_can_prop_logp.pickle')
+            prop_qed_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_can_prop_qed.pickle')
+            prop_sas_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_can_prop_sas.pickle')
+            classes_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_can_classes_' + self.type_property + '.pickle')
+            classes_breakpoints_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_can_classes_' + self.type_property + '_breakpoints.pickle')
+        else:
+            prop_weight_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_weight.pickle')
+            prop_logp_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_logp.pickle')
+            prop_qed_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_qed.pickle')
+            prop_sas_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_prop_sas.pickle')
+            classes_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_classes_' + self.type_property + '.pickle')
+            classes_breakpoints_pickle = os.path.join(self.config.dataset_dir, 'dataset_QM9_sm_classes_' + self.type_property + '_breakpoints.pickle')
+        
         if os.path.isfile(prop_weight_pickle) and os.path.isfile(prop_logp_pickle) and os.path.isfile(prop_qed_pickle) and os.path.isfile(prop_sas_pickle) and os.path.isfile(classes_pickle) and os.path.isfile(classes_breakpoints_pickle):
             print("Loading existing properties and classes")
             with open(prop_weight_pickle, 'rb') as f:
