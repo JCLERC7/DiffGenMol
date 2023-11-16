@@ -1,16 +1,16 @@
 {
-    "name": "DiffGenMol-Selfies-LogP-Without-Can",
+    "name": "DiffGenMol-Smiles-Can-LogP",
     "n_gpu": 1,
     "save_dir": "saved/",
 
     "data_loader": {
-        "type": "QM9DataLoaderSelfies",
+        "type": "QM9DataLoaderSmiles",
         "args":{
             "dataset_size" : 105625,
             "batch_size": 16,
             "num_classes" : 3,
             "type_property": "LogP",
-            "canonicalize_smiles" : false,
+            "canonicalize_smiles" : true,
             "shuffle": true
         }
     },
