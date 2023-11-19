@@ -64,10 +64,6 @@ class QM9DataLoaderSelfies():
 
             self.train_smiles = train_smiles_prep['smiles']
             self.train_smiles.to_pickle(dataset_smiles_pickle)
-            if canonicalize_smiles:
-                self.train_smiles.to_csv(f'{self.config.dataset_dir}/dataset_QM9_sf_train_can_smiles.csv', index=False)
-            else:
-                self.train_smiles.to_csv(f'{self.config.dataset_dir}/dataset_QM9_sf_train_smiles.csv', index=False)
             self.logger.info('Smiles dataset saved')
         
         self.logger.info(f'dataset_size: {len(self.train_smiles)}')
@@ -93,8 +89,7 @@ class QM9DataLoaderSelfies():
         
         # Calculation Selfies features (alphabet and dico)
         self.logger.info('Calculate selfies features')
-        self.largest_value_len, self.selfies_alphabet, self.symbol_to_int, self.int_mol = utils.get_selfies_features(self.train_selfies)
-
+        self.largest_value_len, self.selfies_alphabet, self.symbol_to_int, self.int_mol = utils.get_selfies_features(self.train_selfies, canonicalize_smiles)
 
         self.seq_length = len(self.selfies_alphabet)
         self.logger.info(f'seq_length: {self.seq_length}')
@@ -150,6 +145,12 @@ class QM9DataLoaderSelfies():
                 pickle.dump(self.train_classes, f)
             with open(classes_breakpoints_pickle, 'wb') as f:
                 pickle.dump(self.classes_breakpoints, f)
+            d = {'smiles':self.train_smiles,'LogP':self.prop_logp,'QED':self.prop_qed,'SAS':self.prop_sas}
+            df = pd.DataFrame(d)
+            if canonicalize_smiles:
+                df.to_csv(f'{self.config.result_dir}/train_smiles_can.csv', index=False)
+            else:
+                df.to_csv(f'{self.config.result_dir}/train_smiles.csv', index=False)
             self.logger.info('Properties and classes breakpoints saved')
 
         self.logger.info('Creating DatasetSelfies')

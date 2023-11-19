@@ -51,7 +51,7 @@ class Trainer1D(object):
         gradient_accumulate_every = 2,
         train_lr = 1e-4,
         train_num_steps = 50000,
-        ema_update_every = 434,
+        ema_update_every = 363,
         ema_decay = 0.995,
         adam_betas = (0.9, 0.99),
         eval_and_sample_every = 1000,

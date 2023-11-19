@@ -53,12 +53,19 @@ def smiles_to_selfies(smiles):
    selfies_list = np.asanyarray(smiles.apply(sf.encoder))
    return selfies_list
 
-def get_selfies_features(selfies):
+def get_selfies_features(selfies, canonicalize_smiles):
   selfies_alphabet = sf.get_alphabet_from_selfies(selfies)
   if '[/F]' not in selfies_alphabet:
     selfies_alphabet.add('[/F]')
   if '[\\CH1-1]' not in selfies_alphabet:
     selfies_alphabet.add('[\\CH1-1]')
+  # Padding
+  if canonicalize_smiles == False:
+    selfies_alphabet.add('[/C@@H1]')
+    selfies_alphabet.add('[/C@H1]')
+    selfies_alphabet.add('[/CH1+1]')
+    selfies_alphabet.add('[/CH1-1]')
+
   selfies_alphabet.add('[nop]')  # Add the "no operation" symbol as a padding character
   selfies_alphabet.add('.') 
   selfies_alphabet = list(sorted(selfies_alphabet))
@@ -104,7 +111,7 @@ def continous_mols_to_selfies(continous_mols, selfies_alphabet, int_mol):
    for mol in quantized_data:
     for letter in mol:
       if all(elem == 0 for elem in letter):
-        letter[len(selfies_alphabet)] = 1
+        letter[len(selfies_alphabet)-1] = 1
    selfies = [sf.encoding_to_selfies(mol.cpu().tolist(), int_mol, enc_type="one_hot") for mol in quantized_data]
    return selfies
 
