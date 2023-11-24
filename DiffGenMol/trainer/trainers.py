@@ -48,6 +48,7 @@ class Trainer1D(object):
         config,
         *,
         model = None,
+        best_model_path = None,
         gradient_accumulate_every = 2,
         train_lr = 1e-4,
         train_num_steps = 50000,
@@ -139,6 +140,9 @@ class Trainer1D(object):
 
         self.model, self.opt = self.accelerator.prepare(self.model, self.opt)
 
+        # best model if re-evaluate
+        self.best_model_path = best_model_path
+
         # setup visualization writer instance                
         self.writer = TensorboardWriter(self.log_dir, self.logger, tensorboard)
         self.train_metrics = utils.MetricTracker('0_loss', 'A_UC_01_syntax_validity_samples', 'A_UC_02_mol_validity_samples',
@@ -180,7 +184,10 @@ class Trainer1D(object):
         accelerator = self.accelerator
         device = accelerator.device
 
-        data = torch.load(str(self.model_dir / f'best-model.pt'), map_location=device)
+        if self.best_model_path is None:
+          data = torch.load(str(self.model_dir / f'best-model.pt'), map_location=device)
+        else:
+          data = torch.load(str(self.best_model_path), map_location=device)
 
         model = self.accelerator.unwrap_model(self.model)
         model.load_state_dict(data['model'])
@@ -255,14 +262,19 @@ class Trainer1D(object):
 
         accelerator.print('training complete')
         # Final results with best model
-        self.load_best_model()
-        self.eval_and_sample(self.num_samples_final_eval, 'best')
-        # save logged informations into log dict
-        log = {'step': self.step}
-        log.update(result)
-        # print logged informations to the screen
-        for key, value in log.items():
-            self.logger.info('    {:15s}: {}'.format(str(key), value))
+        self.evaluate_best_model()
+    
+    def evaluate_best_model(self):
+      self.load_best_model()
+      self.train_metrics.reset()
+      self.eval_and_sample(self.num_samples_final_eval, 'best')
+      result = self.train_metrics.result()
+      # save logged informations into log dict
+      log = {'step': self.step}
+      log.update(result)
+      # print logged informations to the screen
+      for key, value in log.items():
+        self.logger.info('    {:15s}: {}'.format(str(key), value))
     
     def eval_and_sample(self, num_samples, step):
         # unconditional
