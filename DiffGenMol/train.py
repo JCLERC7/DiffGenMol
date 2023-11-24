@@ -37,9 +37,8 @@ def main(config):
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='DiffGenMol')
     # config json
-    args.add_argument('-c', '--config', default="config_selfies_logp_heavy.json", type=str,
+    args.add_argument('-c', '--config', default="config_selfies_can_logp_heavy.json", type=str,
                       help='config file path (default: None)')
-
     # custom cli options
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')
     options = [
